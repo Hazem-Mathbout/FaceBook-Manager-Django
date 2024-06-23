@@ -1,0 +1,15 @@
+<!-- template_manager/template_form.html -->
+
+{% extends 'base.html' %}
+{% block title %}Template Form{% endblock %}
+{% block content %}
+<div class="card mt-4">
+    <div class="card-header bg-primary text-white">
+        <h2>{{ form.instance.pk|yesno:"Update Template,Create Template" }}</h2>
+    </div>
+    <div class="card-body">
+        {% include 'partials/form.html' with form=form button_text="Save" %}
+        <a href="{% url 'template_list' %}" class="btn btn-secondary mt-3">Back to List</a>
+    </div>
+</div>
+{% endblock %}

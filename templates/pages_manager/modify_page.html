@@ -1,0 +1,18 @@
+<!-- templates/posts/modify_page.html -->
+
+{% extends 'base.html' %}
+{% load static %}
+{% load form_tags %}
+
+{% block title %}Modify Page{% endblock %}
+
+{% block content %}
+<div class="card mt-4">
+    <div class="card-header bg-primary text-white">
+        <h2>Modify Page</h2>
+    </div>
+    <div class="card-body">
+        {% include 'partials/form.html' with form=form button_text="Save Changes" %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,53 @@
+<!-- template_manager/template_list.html -->
+
+{% extends 'base.html' %}
+{% block title %}Template List{% endblock %}
+{% block content %}
+<div class="card mt-4">
+    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+        <h2>Manage Templates</h2>
+        <a href="{% url 'template_create' %}" class="btn btn-light d-flex align-items-center" style="border-radius: 25px; padding: 0.5em 1em;">
+            <i class="fas fa-plus p-1"></i> <span>Create New Template</span>
+        </a>
+    </div>
+    <div class="card-body">
+        {% if templates %}
+        <ul class="list-group">
+            {% for template in templates %}
+            <li class="list-group-item">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>Name:</strong> {{ template.name }}<br>
+                        <strong>Font Type:</strong> {{ template.font_type }}<br>
+                        <strong>Text Color:</strong>
+                        <div style="display: inline-block; width: 20px; height: 20px; background-color: {{ template.text_color }}; border-radius: 50%; border: 1px solid #000;"></div><br>
+                        <strong>Text Size:</strong> {{ template.text_size }}<br>
+                        {% comment %} <strong>Stroke:</strong> {{ template.stroke }}<br> {% endcomment %}
+                        {% comment %} {% if template.stroke %} {% endcomment %}
+                        <strong>Stroke Thickness:</strong> {{ template.stroke_thickness }}<br>
+                        {% if template.stroke_thickness > 0 %}
+                        <strong>Stroke Color:</strong>
+                        <div style="display: inline-block; width: 20px; height: 20px; background-color: {{ template.stroke_color }}; border-radius: 50%; border: 1px solid #000;"></div><br>
+                        {% endif %}
+                        <strong>Text Position:</strong> {{ template.get_text_position_display }}<br>
+                        {% if template.background_image %}
+                        <strong>Background Image:</strong><br>
+                        <img src="{{ template.background_image.url }}" alt="Background Image" style="max-width: 100px; max-height: 100px; object-fit: cover;">
+                        {% endif %}
+                    </div>
+                    <div>
+                        <a href="{% url 'template_update' template.pk %}" class="btn btn-warning btn-sm me-2">Modify</a>
+                        <a href="{% url 'template_delete' template.pk %}" class="btn btn-danger btn-sm">Delete</a>
+                    </div>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <div class="alert alert-info mt-3" role="alert">
+            No templates available.
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

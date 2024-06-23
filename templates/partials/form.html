@@ -1,0 +1,288 @@
+<!-- templates/partials/form.html -->
+
+{% load static %}
+{% load form_tags %}
+{% load form_filters %}
+
+<!-- Include jQuery -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<!-- Include Select2 CSS -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
+
+<!-- Include Select2 JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+
+<!-- Link to your custom CSS -->
+<link rel="stylesheet" type="text/css" href="{% static 'styles.css' %}">
+
+<form method="post" class="needs-validation" novalidate enctype="multipart/form-data">
+    {% csrf_token %}
+    {% for field in form %}
+        <div class="form-group mb-3">
+
+            {% if field.name == 'user_timezone' %}
+                <input type="hidden" id="user-timezone" name="user_timezone"  value="">
+
+            {% elif field.name == 'facebook_pages' %}
+                <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                {{ field }}
+                <div id="facebook-pages-error" class="invalid-feedback" style="display: none;">At least one Facebook Page must be selected.</div>
+                {% for error in field.errors %}
+                    <div class="invalid-feedback d-block">{{ error }}</div>
+                {% endfor %}
+
+            {% elif field.name == 'templates' %}
+                <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                {{ field }}
+                <div id="templates-error" class="invalid-feedback" style="display: none;">At least one Template must be selected For This Page.</div>
+
+            {% elif field|is_checkbox %}
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="{{ field.id_for_label }}" name="{{ field.html_name }}" {% if field.value %}checked{% endif %}>
+                    <label class="form-check-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {% for error in field.errors %}
+                        <div class="invalid-feedback d-block">{{ error }}</div>
+                    {% endfor %}
+                </div>
+            
+            {% elif field.name == 'access_token' %}
+                <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                {% if request.session.access_token %}
+                    <input type="hidden" name="access_token" value="{{ request.session.access_token }}">
+                {% endif %}
+                {{ field|as_bootstrap }}
+                {% for error in field.errors %}
+                    <div class="invalid-feedback d-block">{{ error }}</div>
+                {% endfor %}
+            
+            {% else %}
+                <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                {{ field|as_bootstrap }}
+                {% for error in field.errors %}
+                    <div class="invalid-feedback d-block">{{ error }}</div>
+                {% endfor %}
+            {% endif %}
+        </div>
+    {% endfor %}
+
+    {% comment %} {% if formset.forms %}
+        <!-- Render the formset for PostFacebookPageTemplate -->
+        <h4>Templates for each Facebook Page</h4>
+        {{ formset.management_form }}
+        {% for form in formset %}
+            <div class="form-group mb-3">
+                {{ form.as_p }}
+            </div>
+        {% endfor %}
+    {% endif %} {% endcomment %}
+
+    <button type="submit" class="btn btn-primary mb-3" id="submit-button">
+        {{ button_text }}
+        <span id="loading-spinner" class="spinner-border spinner-border-sm" role="status" aria-hidden="true" style="display: none;"></span>
+    </button>
+
+</form>
+
+<script>
+    $(document).ready(function() {
+        console.log("Document ready");
+
+        {% comment %} // Capture the user's timezone
+        document.getElementById('user-timezone').value = Intl.DateTimeFormat().resolvedOptions().timeZone; {% endcomment %}
+    
+        // Initialize Select2
+        $('#id_facebook_pages').select2({
+            placeholder: 'Select pages',
+            allowClear: true,
+            width: '100%'
+        });
+    
+        $('#id_templates').select2({
+            placeholder: 'Select Templates',
+            allowClear: true,
+            width: '100%'
+        });
+    
+        // Show/hide the validation message based on selection
+        $('#id_facebook_pages').on('change', function() {
+            console.log("Changing #id_facebook_pages");
+            var facebookPagesSelected = $(this).val();
+            console.log(facebookPagesSelected);
+            if (facebookPagesSelected.length === 0) {
+                $('#facebook-pages-error').show();
+                console.log("Validation error shown");
+            } else {
+                $('#facebook-pages-error').hide();
+                console.log("Validation error hidden");
+            }
+        });
+    
+        $('#id_templates').on('change', function() {
+            var templatesSelected = $(this).val();
+            if (templatesSelected.length === 0) {
+                $('#templates-error').show();
+            } else {
+                $('#templates-error').hide();
+            }
+        });
+    
+        // Bootstrap validation script
+        var forms = document.querySelectorAll('.needs-validation');
+        Array.prototype.slice.call(forms)
+            .forEach(function (form) {
+                form.addEventListener('submit', function (event) {
+                    console.log('Form submit button pressed.');
+    
+                    var facebookPagesSelected = $('#id_facebook_pages').val();
+                    var templatePagesSelected = $('#id_templates').val();
+    
+                    console.log('Selected Facebook pages:', facebookPagesSelected);
+                    console.log('Selected Template pages:', templatePagesSelected);
+    
+                    var hasErrors = false;
+    
+                    if (typeof templatePagesSelected != 'undefined') {
+                        if (templatePagesSelected.length === 0) {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            $('#templates-error').show();
+                            hasErrors = true;
+                        } else {
+                            $('#templates-error').hide();
+                        }
+                    }
+    
+                    if (typeof facebookPagesSelected != 'undefined') {
+                        if (facebookPagesSelected.length === 0) {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            $('#facebook-pages-error').show();
+                            hasErrors = true;
+                        } else {
+                            $('#facebook-pages-error').hide();
+                        }
+                    }
+    
+                    if (!form.checkValidity()) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        hasErrors = true;
+                    } else {
+                        form.classList.add('was-validated');
+                    }
+    
+                    if (hasErrors) {
+                        console.log('Form has validation errors.');
+                        // Hide the spinner and enable the button if there are errors
+                        $('#submit-button').attr('disabled', false);
+                        $('#loading-spinner').hide();
+                    } else {
+                        console.log('Form validated successfully.');
+                        // Show the spinner and disable the button
+                        $('#submit-button').attr('disabled', true);
+                        $('#loading-spinner').show();
+                    }
+                }, false);
+            });
+    });
+</script>
+
+{% comment %} {% load static %}
+{% load form_tags %}
+{% load form_filters %}
+
+<!-- Include jQuery -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<!-- Include Select2 CSS -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
+
+<!-- Include Select2 JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+
+<!-- Link to your custom CSS -->
+<link rel="stylesheet" type="text/css" href="{% static 'styles.css' %}">
+
+<form method="post" class="needs-validation" novalidate enctype="multipart/form-data">
+    {% csrf_token %}
+    {% for field in form %}
+        <div class="form-group mb-3">
+            {% if field.name == 'facebook_pages' %}
+                <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                {{ field }}
+                <div id="facebook-pages-error" class="invalid-feedback" style="display: none;">At least one Facebook Page must be selected.</div>
+                {% for error in field.errors %}
+                    <div class="invalid-feedback d-block">{{ error }}</div>
+                {% endfor %}
+
+            {% elif field|is_checkbox %}
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="{{ field.id_for_label }}" name="{{ field.html_name }}" {% if field.value %}checked{% endif %}>
+                    <label class="form-check-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {% for error in field.errors %}
+                        <div class="invalid-feedback d-block">{{ error }}</div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                {{ field|as_bootstrap }}
+                {% for error in field.errors %}
+                    <div class="invalid-feedback d-block">{{ error }}</div>
+                {% endfor %}
+            {% endif %}
+        </div>
+    {% endfor %}
+    <button type="submit" class="btn btn-primary mb-3">{{ button_text }}</button>
+</form>
+
+<script>
+$(document).ready(function() {
+    // Initialize Select2
+    $('#id_facebook_pages').select2({
+        placeholder: 'Select pages',
+        allowClear: true,
+        width: '100%'
+    });
+
+    // Show/hide the validation message based on selection
+    $('#id_facebook_pages').on('change', function() {
+        console.log("Changing #id_facebook_pages");
+        var facebookPagesSelected = $(this).val();
+        console.log(facebookPagesSelected);
+        if (facebookPagesSelected.length === 0) {
+            $('#facebook-pages-error').show();
+            console.log("Validation error shown");
+        } else {
+            $('#facebook-pages-error').hide();
+            console.log("Validation error hidden");
+        }
+    });
+
+    // Bootstrap validation script
+    var forms = document.querySelectorAll('.needs-validation');
+    Array.prototype.slice.call(forms)
+        .forEach(function (form) {
+            form.addEventListener('submit', function (event) {
+                console.log('Form submit button pressed.');
+
+                var facebookPagesSelected = $('#id_facebook_pages').val();
+                console.log('Selected Facebook pages:', facebookPagesSelected);
+
+                if (!form.checkValidity() || facebookPagesSelected.length === 0) {
+                    event.preventDefault();
+                    event.stopPropagation();
+
+                    if (facebookPagesSelected.length === 0) {
+                        console.log('No Facebook pages selected.');
+                        $('#facebook-pages-error').show();
+                    } else {
+                        $('#facebook-pages-error').hide();
+                    }
+                } else {
+                    form.classList.add('was-validated');
+                }
+            }, false);
+        });
+});
+</script> {% endcomment %}

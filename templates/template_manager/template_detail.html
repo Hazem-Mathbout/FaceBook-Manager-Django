@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% block title %}Template Detail{% endblock %}
+{% block content %}
+<div class="card mt-4">
+    <div class="card-header bg-primary text-white">
+        <h2>Template Detail</h2>
+    </div>
+    <div class="card-body">
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <p><strong>Name:</strong> {{ template.name }}</p>
+                <p><strong>Font Type:</strong> {{ template.font_type }}</p>
+                <p><strong>Text Color:</strong> 
+                    <span style="display: inline-block; width: 20px; height: 20px; background-color: {{ template.text_color }}; border-radius: 50%; border: 1px solid #000;"></span>
+                </p>
+                <p><strong>Text Size:</strong> {{ template.text_size }}</p>
+                {% comment %} <p><strong>Stroke:</strong> {{ template.stroke }}</p> {% endcomment %}
+                <p><strong>Stroke Thickness:</strong> {{ template.stroke_thickness }}</p>
+                {% if template.stroke_thickness > 0 %}
+                    <p><strong>Stroke Color:</strong> 
+                        <span style="display: inline-block; width: 20px; height: 20px; background-color: {{ template.stroke_color }}; border-radius: 50%; border: 1px solid #000;"></span>
+                    </p>
+                {% endif %}
+                <p><strong>Text Position:</strong> {{ template.get_text_position_display }}</p>
+            </div>
+            {% if template.background_image %}
+            <div class="col-md-6 text-center">
+                <p><strong>Background Image:</strong></p>
+                <img src="{{ template.background_image.url }}" alt="Background Image" class="img-thumbnail" style="max-width: 300px; max-height: 300px; object-fit: cover;">
+            </div>
+            {% endif %}
+        </div>
+        {% comment %} <div class="d-flex justify-content-center mt-4">
+            <a href="{% url 'template_update' template.pk %}" class="btn btn-warning me-2" style="margin-right: 10px;">Modify</a>
+            <a href="{% url 'template_delete' template.pk %}" class="btn btn-danger" style="margin-left: 10px;">Delete</a>
+        </div> {% endcomment %}
+    </div>
+</div>
+{% endblock %}

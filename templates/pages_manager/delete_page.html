@@ -1,0 +1,23 @@
+<!-- templates/posts/delete_page.html -->
+
+{% extends 'base.html' %}
+{% load static %}
+{% load form_tags %}
+
+{% block title %}Delete Page{% endblock %}
+
+{% block content %}
+<div class="card mt-4">
+    <div class="card-header bg-primary text-white">
+        <h2>Delete Page</h2>
+    </div>
+    <div class="card-body">
+        <p>Are you sure you want to delete the page "{{ page.name }}"?</p>
+        <form method="post">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">Yes, delete</button>
+            <a href="{% url 'pages_list' %}" class="btn btn-secondary">Cancel</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

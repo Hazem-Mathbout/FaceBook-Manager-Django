@@ -1,0 +1,70 @@
+<!-- pages_manager/page_form.html -->
+
+{% extends 'base.html' %}
+{% block title %}Page Form{% endblock %}
+{% block content %}
+<div class="card mt-4">
+    <div class="card-header bg-primary text-white">
+        <h2>{{ form.instance.pk|yesno:"Update Page,Create Page" }}</h2>
+    </div>
+    <div class="card-body">
+        {% comment %} {% if access_token_valid %} {% endcomment %}
+            {% include 'partials/form.html' with form=form button_text="Save" %}
+            <a href="{% url 'pages_list' %}" class="btn btn-secondary mt-3">Back to List</a>
+        {% comment %} {% else %} {% endcomment %}
+            <div class="alert alert-warning mt-3">
+                Access token is missing or invalid. Please authenticate with Facebook to continue.
+            </div>
+            <a href="{% url 'facebook_login' %}" class="btn btn-primary mt-3">Login with Facebook</a>
+        {% comment %} {% endif %} {% endcomment %}
+    </div>
+</div>
+{% endblock %}
+
+
+
+{% comment %} {% extends 'base.html' %}
+{% block title %}Page Form{% endblock %}
+{% block content %}
+<div class="card mt-4">
+    <div class="card-header bg-primary text-white">
+        <h2>{{ form.instance.pk|yesno:"Update Page,Create Page" }}</h2>
+    </div>
+    <div class="card-body">
+        {% include 'partials/form.html' with form=form button_text="Save" %}
+        <a href="{% url 'pages_list' %}" class="btn btn-secondary mt-3">Back to List</a>
+        
+        {% if not request.session.access_token %}
+            <div class="alert alert-warning mt-3">
+                Access token is missing. Please authenticate with Facebook to continue.
+            </div>
+            <a href="{% url 'facebook_login' %}" class="btn btn-primary mt-3">Login with Facebook</a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %} {% endcomment %}
+
+
+
+
+
+
+
+
+
+
+{% comment %} <!-- pages_manager/page_form.html -->
+
+{% extends 'base.html' %}
+{% block title %}Page Form{% endblock %}
+{% block content %}
+<div class="card mt-4">
+    <div class="card-header bg-primary text-white">
+        <h2>{{ form.instance.pk|yesno:"Update Page,Create Page" }}</h2>
+    </div>
+    <div class="card-body">
+        {% include 'partials/form.html' with form=form button_text="Save" %}
+        <a href="{% url 'pages_list' %}" class="btn btn-secondary mt-3">Back to List</a>
+    </div>
+</div>
+{% endblock %} {% endcomment %}

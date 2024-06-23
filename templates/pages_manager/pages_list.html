@@ -1,0 +1,86 @@
+<!-- templates/posts/page_list.html -->
+
+{% extends 'base.html' %}
+{% load static %}
+{% load form_tags %}
+
+{% block title %}Manage Pages{% endblock %}
+
+{% block content %}
+<div class="card mt-4">
+    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+        <h2>Manage Pages</h2>
+        <a href="{% url 'page_create' %}" class="btn btn-light d-flex align-items-center" style="border-radius: 25px; padding: 0.5em 1em;">
+            <i class="fas fa-plus p-1"></i> <span class="me-2">Add New Page</span>
+        </a>
+    </div>
+    <div class="card-body">
+        {% if pages %}
+        <ul class="list-group">
+            {% for page in pages %}
+                <li class="list-group-item">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div style="flex: 1;">
+                            <strong class="text-success">{{ page.name }}</strong><br>
+                            <div class="d-flex align-items-center">
+                                <div style="min-width: 120px;">Page ID:</div>
+                                <div class="text-truncate" style="max-width: 200px;" data-toggle="tooltip" title="{{ page.page_id }}" id="page-id-{{ forloop.counter }}">{{ page.page_id }}</div>
+                                <button class="btn btn-outline-secondary btn-sm ml-2" onclick="copyToClipboard('page-id-{{ forloop.counter }}')">Copy</button>
+                            </div>
+                            <div class="d-flex align-items-center mt-2">
+                                <div style="min-width: 120px;">Access Token:</div>
+                                <div class="text-truncate" style="max-width: 200px;" data-toggle="tooltip" title="{{ page.access_token }}" id="access-token-{{ forloop.counter }}">{{ page.access_token }}</div>
+                                <button class="btn btn-outline-secondary btn-sm ml-2" onclick="copyToClipboard('access-token-{{ forloop.counter }}')">Copy</button>
+                            </div>
+                            <div class="d-flex mt-2">
+                                <div style="min-width: 120px;">Language:</div>
+                                <div>{{ page.get_language_display }}</div>
+                            </div>
+                            <strong>Templates:</strong><br>
+                            <ul>
+                                {% for template in page.templates.all %}
+                                    <li>
+                                        <a href="{% url 'template_detail' template.id %}" target="_blank">{{ template.name }}</a>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        <div>
+                            <a href="{% url 'modify_page' page.id %}" class="btn btn-warning btn-sm me-2">Modify</a>
+                            <a href="{% url 'delete_page' page.id %}" class="btn btn-danger btn-sm">Delete</a>
+                        </div>
+                    </div>
+                </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <div class="alert alert-info mt-3" role="alert">
+            No pages available.
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Include necessary libraries directly in this template -->
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+<script>
+    $(function () {
+        $('[data-toggle="tooltip"]').tooltip()
+    });
+
+    function copyToClipboard(elementId) {
+        var tempInput = document.createElement("input");
+        tempInput.value = document.getElementById(elementId).innerText;
+        document.body.appendChild(tempInput);
+        tempInput.select();
+        document.execCommand("copy");
+        document.body.removeChild(tempInput);
+        alert("Copied to clipboard: " + tempInput.value);
+    }
+</script>
+{% endblock %}
