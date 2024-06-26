@@ -39,7 +39,8 @@ DEBUG = os.getenv('DEBUG', default=True)
 #     '*'
 # ]
 # ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='*').split(',')
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', default='*')
+ALLOWED_HOSTS = ["127.0.0.1" , "localhost"]
+ALLOWED_HOSTS += os.getenv('ALLOWED_HOSTS', default='*').split()
 
 
 # Application definition
