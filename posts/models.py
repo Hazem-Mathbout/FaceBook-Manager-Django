@@ -52,11 +52,11 @@ class Post(models.Model):
         return self.recipe_name
 
     def save(self, *args, **kwargs):
-        if self.publish_now:
-            self.publication_time = None  # Clear publication_time if publishing immediately
-        else:
-            if not self.publication_time:
-                raise ValidationError({"publication_time": "Publication time must be set if not publishing immediately."})
+        # if self.publish_now:
+        #     self.publication_time = None  # Clear publication_time if publishing immediately
+        # else:
+        if not self.publication_time and not self.publish_now:
+            raise ValidationError({"publication_time": "Publication time must be set if not publishing immediately."})
 
         super().save(*args, **kwargs)
 

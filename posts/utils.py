@@ -13,8 +13,6 @@ from deep_translator import GoogleTranslator
 import json
 from .models import PostFacebookPageTemplate
 
-
-
 # from typing import Dict, Any
 # from urllib import request, parse
 # import json
@@ -417,7 +415,7 @@ def publish_post(post_page_template: PostFacebookPageTemplate):
             # If successful, update the post_page_template
             current_time = timezone.now()
             post.publication_time = current_time
-            post.publish_now = False
+            # post.publish_now = True
             post_page_template.is_published = True
             post_page_template.failure_message = "Successfully published"
             post_page_template.save()

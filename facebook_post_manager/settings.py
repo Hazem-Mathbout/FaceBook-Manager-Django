@@ -102,6 +102,17 @@ DATABASES = {
     }
 }
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.mysql',
+#         'NAME': 'evsdriver',
+#         'USER': 'evsdriver',
+#         'PASSWORD': 'NPjnftTc2MHkYBFE',
+#         'HOST': '62.171.188.178',  # or your database server IP address
+#         'PORT': '888',  # Default MySQL port
+#     }
+# }
+
 
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
