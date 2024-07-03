@@ -1,12 +1,14 @@
 #!/usr/bin/env python
 """Django's command-line utility for administrative tasks."""
 import os
+from dotenv import load_dotenv
 import sys
 
 
 def main():
     """Run administrative tasks."""
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'facebook_post_manager.settings')
+    load_dotenv()
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'facebook_post_manager.settings.production')
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:
