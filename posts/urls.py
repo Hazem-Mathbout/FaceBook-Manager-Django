@@ -12,8 +12,8 @@ urlpatterns = [
 
     # --------------- Facebook Tokens -----------
     
-    path('facebook/login/', views.facebook_login, name='facebook_login'),
-    path('facebook/callback/', views.facebook_callback, name='facebook_callback')
+    # path('facebook/login/', views.facebook_login, name='facebook_login'),
+    # path('facebook/callback/', views.facebook_callback, name='facebook_callback')
 
 
     

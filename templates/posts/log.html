@@ -58,11 +58,11 @@
                 {% for log in logs %}
                     <tr>
                         <td>
-                            <img src="{{ log.post_page_template.image.url }}" alt="{{ log.post_page_template.recipe_name }}" width="75" style="cursor: zoom-in;" onclick="showImageModal('{{ log.post_page_template.image.url }}', '{{ log.post_page_template.recipe_name }}')">
+                            <img src="{{ log.post_page_template.post.image.url }}" alt="{{ log.post_page_template.post.recipe_name }}" width="75" style="cursor: zoom-in;" onclick="showImageModal('{{ log.post_page_template.post.image.url }}', '{{ log.post_page_template.post.recipe_name }}')">
                         </td>
                         <td class="text-truncate">{{ log.post_page_template.post.user.username }}</td>
                         <td data-utc-time="{{ log.post_page_template.post.publication_time|date:'Y-m-d\TH:i:s\Z' }}">{{ log.post_page_template.post.publication_time|default_if_none:"unknown" }}</td>
-                        <td class="text-truncate">{{ log.post_page_template.recipe_name }}</td>
+                        <td class="text-truncate">{{ log.post_page_template.post.recipe_name }}</td>
                         <td class="text-truncate">{{ log.post_page_template.facebook_page.name }}</td>
                         <td>
                             {% if log.post_page_template.is_published %}

@@ -15,12 +15,15 @@ import os
 # from decouple import config
 from dotenv import load_dotenv
 
-# Load environment variables from .env file
-load_dotenv()
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 # BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+# Load environment variables from .env file
+dotenv_path = BASE_DIR / '.env'
+load_dotenv(dotenv_path="/www/wwwroot/evsdriver.com/FaceBook-Manager-Django/.env")
 
 
 # Quick-start development settings - unsuitable for production
@@ -31,8 +34,9 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 
 
 # SECURITY WARNING: don't run with debug turned on in production!
-# DEBUG = True
 DEBUG = os.getenv('DEBUG', default=True)
+# DEBUG = False
+
 
 
 # ALLOWED_HOSTS = [
@@ -76,7 +80,9 @@ ROOT_URLCONF = 'facebook_post_manager.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR, 'templates/',],
+        'DIRS': [
+            os.path.join(BASE_DIR, 'templates'),  # Use os.path.join for consistency
+        ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -95,10 +101,22 @@ WSGI_APPLICATION = 'facebook_post_manager.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
+#     }
+# }
+
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'evsdriver',
+        'USER': 'evsdriver',
+        'PASSWORD': 'NPjnftTc2MHkYBFE',
+        'HOST': 'localhost',  # or your database server IP address
+        'PORT': '3306',  
     }
 }
 
@@ -158,6 +176,6 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 
-FACEBOOK_APP_ID = os.getenv('FACEBOOK_APP_ID')
-FACEBOOK_APP_SECRET = os.getenv('FACEBOOK_APP_SECRET')
-FACEBOOK_REDIRECT_URI = os.getenv('FACEBOOK_REDIRECT_URI') # Make sure this matches the redirect URI registered in your Facebook app
+# FACEBOOK_APP_ID = os.getenv('FACEBOOK_APP_ID')
+# FACEBOOK_APP_SECRET = os.getenv('FACEBOOK_APP_SECRET')
+# FACEBOOK_REDIRECT_URI = os.getenv('FACEBOOK_REDIRECT_URI') # Make sure this matches the redirect URI registered in your Facebook app

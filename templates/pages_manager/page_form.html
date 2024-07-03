@@ -12,10 +12,10 @@
             {% include 'partials/form.html' with form=form button_text="Save" %}
             <a href="{% url 'pages_list' %}" class="btn btn-secondary mt-3">Back to List</a>
         {% comment %} {% else %} {% endcomment %}
-            <div class="alert alert-warning mt-3">
+            {% comment %} <div class="alert alert-warning mt-3">
                 Access token is missing or invalid. Please authenticate with Facebook to continue.
             </div>
-            <a href="{% url 'facebook_login' %}" class="btn btn-primary mt-3">Login with Facebook</a>
+            <a href="{% url 'facebook_login' %}" class="btn btn-primary mt-3">Login with Facebook</a> {% endcomment %}
         {% comment %} {% endif %} {% endcomment %}
     </div>
 </div>
