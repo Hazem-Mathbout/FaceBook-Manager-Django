@@ -3,15 +3,20 @@ from template_manager.models import Template
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 import json
+from django.conf import settings
+import os
 
+base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 
-def load_language_choices(file_path='languages.json'):
+def load_language_choices(file_path=os.path.join(base_dir, 'languages.json')):
     try:
         with open(file_path, 'r') as file:
             languages = json.load(file)
             return [(lang['code'], lang['name']) for lang in languages]
     except (FileNotFoundError, json.JSONDecodeError) as e:
         # Fallback to a default set of languages if the file is not found or is invalid
+        print("languages.json path : ", os.path.join(base_dir, 'languages.json'))
+        print("Error: " , str(e))
         return [
             ('en', 'English'),
             ('es', 'Spanish'),
@@ -24,6 +29,8 @@ class FacebookPage(models.Model):
     name = models.CharField(max_length=100)
     page_id = models.CharField(max_length=100)
     access_token = models.CharField(max_length=255)
+    app_id = models.CharField(max_length=100 , null=False, blank=False)
+    app_secret = models.CharField(max_length=100, null=False, blank=False)
     templates = models.ManyToManyField(Template)  # New field to link with Template
 
     # Add Language Selection for Page tranlation here...

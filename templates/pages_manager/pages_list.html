@@ -32,6 +32,16 @@
                                 <div class="text-truncate" style="max-width: 200px;" data-toggle="tooltip" title="{{ page.access_token }}" id="access-token-{{ forloop.counter }}">{{ page.access_token }}</div>
                                 <button class="btn btn-outline-secondary btn-sm ml-2" onclick="copyToClipboard('access-token-{{ forloop.counter }}')">Copy</button>
                             </div>
+                            <div class="d-flex align-items-center mt-2">
+                                <div style="min-width: 120px;">APP ID:</div>
+                                <div class="text-truncate" style="max-width: 200px;" data-toggle="tooltip" title="{{ page.app_id }}" id="app-id-{{ forloop.counter }}">{{ page.app_id }}</div>
+                                <button class="btn btn-outline-secondary btn-sm ml-2" onclick="copyToClipboard('app-id-{{ forloop.counter }}')">Copy</button>
+                            </div>
+                            <div class="d-flex align-items-center mt-2">
+                                <div style="min-width: 120px;">APP SECRET:</div>
+                                <div class="text-truncate" style="max-width: 200px;" data-toggle="tooltip" title="{{ page.app_secret }}" id="app-secret-{{ forloop.counter }}">{{ page.app_secret }}</div>
+                                <button class="btn btn-outline-secondary btn-sm ml-2" onclick="copyToClipboard('app-secret-{{ forloop.counter }}')">Copy</button>
+                            </div>
                             <div class="d-flex mt-2">
                                 <div style="min-width: 120px;">Language:</div>
                                 <div>{{ page.get_language_display }}</div>

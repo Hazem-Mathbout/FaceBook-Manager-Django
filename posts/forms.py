@@ -3,7 +3,7 @@ from .models import Post, FacebookPage, PostFacebookPageTemplate, Template
 from django.contrib.auth.models import User
 from django.forms import inlineformset_factory
 import facebook
-from django.conf import settings
+# from django.conf import settings
 from .utils import FacebookTokenManager
 import pytz
 from datetime import timedelta
@@ -96,57 +96,56 @@ PostFacebookPageTemplateFormSet = inlineformset_factory(
 class FacebookPageForm(forms.ModelForm):
     class Meta:
         model = FacebookPage
-        fields = ['name', 'page_id', 'access_token', 'templates', 'language']
+        fields = ['name', 'page_id', 'access_token', 'app_id', 'app_secret', 'templates', 'language']
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control'}),
             'page_id': forms.TextInput(attrs={'class': 'form-control'}),
             'access_token': forms.TextInput(attrs={'class': 'form-control'}),
+            'app_id': forms.TextInput(attrs={'class': 'form-control'}),
+            'app_secret': forms.TextInput(attrs={'class': 'form-control'}),
             'templates': forms.SelectMultiple(attrs={'class': 'form-control', 'placeholder': 'Select Templates'}),
             'language': forms.Select(attrs={'class': 'form-control'}),
         }
 
     def __init__(self, *args, **kwargs):
-        # self.request = kwargs.pop('request', None)
-        self.request =  kwargs.pop('request', None)
-        # print("request: ", request)
+        self.request = kwargs.pop('request', None)
         super(FacebookPageForm, self).__init__(*args, **kwargs)
 
-    def clean_access_token(self):
-        # access_token = self.request.session.get('access_token')
-        # if not access_token:
-            # raise forms.ValidationError("Access token is missing. Please authenticate with Facebook again.")
-        print("request: ", self.request)
-        
-        access_token = self.cleaned_data['access_token']
+    def clean(self):
+        cleaned_data = super().clean()
+        access_token = cleaned_data.get('access_token')
+        app_id = cleaned_data.get('app_id')
+        app_secret = cleaned_data.get('app_secret')
+
         if not access_token:
-            raise forms.ValidationError("Access token is missing. Please authenticate with Facebook again.")
-        
-        
+            raise forms.ValidationError({"access_token" : "Access token is missing. Please authenticate with Facebook again."})
+
         fb_manager = FacebookTokenManager(
-            app_id=settings.FACEBOOK_APP_ID,
-            app_secret=settings.FACEBOOK_APP_SECRET,
-            redirect_uri=settings.FACEBOOK_REDIRECT_URI
+            app_id=app_id,
+            app_secret=app_secret,
+            redirect_uri=''
         )
-        
+
         try:
             long_access_token = access_token
             fb_manager.short_lived_token = access_token
             long_access_token = fb_manager.get_long_lived_token()
             fb_manager.set_access_token(long_access_token)
-            fb_manager.get_user_pages()
         except facebook.GraphAPIError:
             new_access_token = fb_manager.refresh_access_token(long_access_token)
             if not new_access_token:
-                raise forms.ValidationError("The provided access token is invalid or expired.")
-            self.cleaned_data['access_token'] = new_access_token
+                raise forms.ValidationError({"access_token" : "The provided access token is invalid or expired."})
+            cleaned_data['access_token'] = new_access_token
 
-        self.cleaned_data['access_token'] = long_access_token
+        cleaned_data['access_token'] = long_access_token
         try:
-            self.request.session['access_token'] = long_access_token
+            if self.request:
+                self.request.session['access_token'] = long_access_token
         except Exception as e:
             print("The request Object is None now.")
+        
         print("long_access_token", long_access_token)
-        return self.cleaned_data['access_token']
+        return cleaned_data
 
 
 

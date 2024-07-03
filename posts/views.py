@@ -5,13 +5,12 @@ from django.contrib import messages
 from django.db import transaction
 from django.core.exceptions import ValidationError
 from .utils import apply_templates_to_image, translate, publish_post
-import os
 import pytz
 from django.core.files.storage import default_storage
 from django.shortcuts import redirect
 from django.http import HttpResponse
-from django.conf import settings
-from .utils import FacebookTokenManager
+# from django.conf import settings
+# from .utils import FacebookTokenManager
 import facebook
 
 
@@ -99,13 +98,13 @@ def post_creation_view(request):
                         print("Error: ", str(e))
                         raise e
 
-                    # Delete the original image for the main post. (Not Needed any more.)
-                    try:
-                        if post.image:
-                                post.image.delete(save=False)
-                    except Exception as e:
-                            print(f"[error]: Ther an error in deleteing image post")
-                            raise e
+                    # # Delete the original image for the main post. (Not Needed any more.)
+                    # try:
+                    #     if post.image:
+                    #             post.image.delete(save=False)
+                    # except Exception as e:
+                    #         print(f"[error]: Ther an error in deleteing image post")
+                    #         raise e
 
                     # Handle Publishing To FaceBook and Create a PostLog entry
                     for post_page_template in post.postfacebookpagetemplate_set.all():
@@ -158,21 +157,21 @@ def page_create(request):
         form = FacebookPageForm(request=request)
 
 
-    access_token_valid = True
-    access_token = request.session.get('access_token')
-    if not access_token:
-        access_token_valid = False
-    else:
-        fb_manager = FacebookTokenManager(
-            app_id=settings.FACEBOOK_APP_ID,
-            app_secret=settings.FACEBOOK_APP_SECRET,
-            redirect_uri=settings.FACEBOOK_REDIRECT_URI
-        )
-        try:
-            fb_manager.set_access_token(access_token)
-            fb_manager.get_user_pages()
-        except facebook.GraphAPIError:
-            access_token_valid = False
+    # access_token_valid = True
+    # access_token = request.session.get('access_token')
+    # if not access_token:
+    #     access_token_valid = False
+    # else:
+    #     fb_manager = FacebookTokenManager(
+    #         app_id=settings.FACEBOOK_APP_ID,
+    #         app_secret=settings.FACEBOOK_APP_SECRET,
+    #         redirect_uri=settings.FACEBOOK_REDIRECT_URI
+    #     )
+    #     try:
+    #         fb_manager.set_access_token(access_token)
+    #         fb_manager.get_user_pages()
+    #     except facebook.GraphAPIError:
+    #         access_token_valid = False
 
     # return render(request, 'pages_manager/page_form.html', {
     #     'form': form,
@@ -226,29 +225,29 @@ def log_view(request):
 
 
 
-def facebook_callback(request):
-    code = request.GET.get('code')
-    fb_manager = FacebookTokenManager(
-        app_id=settings.FACEBOOK_APP_ID,
-        app_secret=settings.FACEBOOK_APP_SECRET,
-        redirect_uri=settings.FACEBOOK_REDIRECT_URI
-    )
-    try:
-        short_lived_token = fb_manager.get_access_token_from_code(code)
-        print("short_lived_token: ", short_lived_token)
-        long_lived_token = fb_manager.get_long_lived_token()
-        print("long_lived_token: ", long_lived_token)
-        request.session['access_token'] = long_lived_token  # Store token in session or database as per your need
-        return redirect('page_create')
-    except Exception as e:
-        return HttpResponse(f'Error: {str(e)}')
+# def facebook_callback(request):
+#     code = request.GET.get('code')
+#     fb_manager = FacebookTokenManager(
+#         app_id=settings.FACEBOOK_APP_ID,
+#         app_secret=settings.FACEBOOK_APP_SECRET,
+#         redirect_uri=settings.FACEBOOK_REDIRECT_URI
+#     )
+#     try:
+#         short_lived_token = fb_manager.get_access_token_from_code(code)
+#         print("short_lived_token: ", short_lived_token)
+#         long_lived_token = fb_manager.get_long_lived_token()
+#         print("long_lived_token: ", long_lived_token)
+#         request.session['access_token'] = long_lived_token  # Store token in session or database as per your need
+#         return redirect('page_create')
+#     except Exception as e:
+#         return HttpResponse(f'Error: {str(e)}')
     
 
-def facebook_login(request):
-    fb_manager = FacebookTokenManager(
-        app_id=settings.FACEBOOK_APP_ID,
-        app_secret=settings.FACEBOOK_APP_SECRET,
-        redirect_uri=settings.FACEBOOK_REDIRECT_URI
-    )
-    authorization_url = fb_manager.get_authorization_url()
-    return redirect(authorization_url)
+# def facebook_login(request):
+#     # fb_manager = FacebookTokenManager(
+#     #     app_id=settings.FACEBOOK_APP_ID,
+#     #     app_secret=settings.FACEBOOK_APP_SECRET,
+#     #     redirect_uri=settings.FACEBOOK_REDIRECT_URI
+#     # )
+#     authorization_url = fb_manager.get_authorization_url()
+#     return redirect(authorization_url)

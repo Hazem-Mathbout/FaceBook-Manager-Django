@@ -1,6 +1,6 @@
 import facebook
 from django.utils import timezone
-from django.conf import settings
+# from django.conf import settings
 import random
 from PIL import Image, ImageDraw, ImageFont
 from django.core.files.base import ContentFile
@@ -96,13 +96,14 @@ def apply_templates_to_image(original_image_path, facebook_pages, org_recipe_nam
             # Translate text.
             try:
                 language = facebook_page.language
-                if language != 'en': # 'en' : is the default languge.
-                    recipe_name_input = translate(org_recipe_name_input, 'en' , language)
+                if language != 'en': # 'en' : is the default language.
+                    recipe_name_input = translate(org_recipe_name_input, 'en', language)
                 else:
                     recipe_name_input = org_recipe_name_input
             except Exception as e:
                 print("Exception in applying Translation To Template: ", str(e))
                 raise e
+
             # Get related templates
             templates = facebook_page.templates.all()
 
@@ -123,55 +124,72 @@ def apply_templates_to_image(original_image_path, facebook_pages, org_recipe_nam
             font = ImageFont.truetype(font_path, template.text_size)
 
             # Set text position
-            text_position, wrapped_text = get_text_position(edited_image.size, template.text_position, recipe_name_input, font)
+            try:
+                text_position, wrapped_text = get_text_position(edited_image.size, template.text_position, recipe_name_input, font)
+            except Exception as e:
+                print("Error in get_text_position: ", str(e))
+                raise e
 
             # Calculate text width and height for the bounding box
-            text_width = max([font.getlength(line) for line in wrapped_text])
-            text_height = template.text_size * len(wrapped_text)
+            try:
+                text_width = max([font.getlength(line) for line in wrapped_text])
+                text_height = template.text_size * len(wrapped_text)
+            except Exception as e:
+                print("Error calculating text width and height: ", str(e))
+                raise e
 
             # Add padding to the text bounding box
-            padding = 20
+            padding = 40
             padded_text_width = text_width + 2 * padding
             padded_text_height = text_height + 2 * padding
 
             # Check for background image
             if template.background_image:
                 background_image = Image.open(template.background_image.path)
-
+                
                 # Checking if there is an alpha(transparent) layer.
                 # Edit the background_image if there is transparent layer.
-                if(has_alpha(background_image)):
-                    background_image =  extract_and_resize_alpha_mask(background_image)
+                if has_alpha(background_image):
+                    background_image = extract_and_resize_alpha_mask(background_image)
 
                 # Calculate the new size while maintaining the aspect ratio
-                bg_width, bg_height = background_image.size
-                aspect_ratio = bg_width / bg_height
+                try:
+                    bg_width, bg_height = background_image.size
+                    aspect_ratio = bg_width / bg_height
 
-                if padded_text_width / aspect_ratio < padded_text_height:
-                    new_bg_height = padded_text_height
-                    new_bg_width = int(new_bg_height * aspect_ratio)
-                else:
-                    new_bg_width = padded_text_width
-                    new_bg_height = int(new_bg_width / aspect_ratio)
+                    if padded_text_width / aspect_ratio < padded_text_height:
+                        new_bg_height = padded_text_height
+                        new_bg_width = int(new_bg_height * aspect_ratio)
+                    else:
+                        new_bg_width = padded_text_width
+                        new_bg_height = int(new_bg_width / aspect_ratio)
+                except Exception as e:
+                    print("Error calculating new background image size: ", str(e))
+                    raise e
 
-                background_image = background_image.resize((int(new_bg_width), int(new_bg_height)))
+                background_image = background_image.resize((bg_width, int(new_bg_height)))
                 # background_image = background_image.resize((int(padded_text_width), int(padded_text_height)))
 
 
                 # Create a mask using the alpha channel of the background image
-                mask = background_image.split()[3]
-                # mask.show()
+                try:
+                    mask = background_image.split()[3]
+                except Exception as e:
+                    print("Error creating mask: ", str(e))
+                    raise e
 
                 # Calculate the position to paste the background image
-                # Those Ranges to make the Text in center of the background image. 
-                range_x = int((new_bg_width - padded_text_width) // 2)
-                range_y = int((new_bg_height - padded_text_height) // 2)
+                try:
+                    range_x = int((new_bg_width - padded_text_width) // 2)
+                    range_y = int((new_bg_height - padded_text_height) // 2)
 
-                bg_position = (
-                    text_position[0] - padding - range_x,
-                    text_position[1] - padding - range_y
-
-                )
+                    bg_position = (
+                        0,
+                        min((text_position[1] - padding - range_y), (edited_image.size[1] - new_bg_height))
+                    )
+                except Exception as e:
+                    print("Error calculating background image position: ", str(e))
+                    raise e
 
                 print("bg_position: ", bg_position)
                 print("text_position: ", text_position)
@@ -179,31 +197,51 @@ def apply_templates_to_image(original_image_path, facebook_pages, org_recipe_nam
                 print("mask size: ", mask.size)
 
                 # Paste the background image into the text area using the mask
-                edited_image.paste(background_image, bg_position, background_image)
+                try:
+                    edited_image.paste(background_image, bg_position, background_image)
+                except Exception as e:
+                    print("Error pasting background image: ", str(e))
+                    raise e
 
             # Draw the wrapped text on the image
-            y = text_position[1]
-            for line in wrapped_text:
-                if template.stroke_thickness > 0:
-                    draw.text((text_position[0], y), line, font=font, fill=template.stroke_color, stroke_width=template.stroke_thickness, stroke_fill=template.stroke_color)
-                draw.text((text_position[0], y), line, font=font, fill=template.text_color)
-                y += template.text_size  # Move to the next line
+            try:
+                if "bottom" in template.text_position:
+                    bottom_padding = 20
+                    y = (text_position[1] - bottom_padding) if (len(wrapped_text) > 1) else  text_position[1]
+                elif "top" in template.text_position:
+                    bottom_padding = 20
+                    y = (text_position[1] + bottom_padding) if (len(wrapped_text) > 1) else  text_position[1]
+                else:
+                    y = text_position[1]
+
+                for line in wrapped_text:
+                    if template.stroke_thickness > 0:
+                        draw.text((text_position[0], y), line, font=font, fill=template.stroke_color, stroke_width=template.stroke_thickness, stroke_fill=template.stroke_color)
+                    draw.text((text_position[0], y), line, font=font, fill=template.text_color)
+                    y += template.text_size  # Move to the next line
+            except Exception as e:
+                print("Error drawing text: ", str(e))
+                raise e
 
             # Save the edited image to a BytesIO object
-            image_io = BytesIO()
-            edited_image.save(image_io, format='PNG')
+            try:
+                image_io = BytesIO()
+                edited_image.save(image_io, format='PNG')
 
-            file_name_without_extension = os.path.splitext(os.path.basename(original_image_path))[0]
+                file_name_without_extension = os.path.splitext(os.path.basename(original_image_path))[0]
 
-            image_content = ContentFile(image_io.getvalue(), name=f'post_page_templates/{file_name_without_extension}.png')
+                image_content = ContentFile(image_io.getvalue(), name=f'post_page_templates/{file_name_without_extension}.png')
 
-            # Append the edited image to the list
-            edited_images.append({
-                'facebook_page': facebook_page,
-                'edited_image': image_content,
-                'template_image' : template,
-                'translated_recipe_name_input': recipe_name_input
-            })
+                # Append the edited image to the list
+                edited_images.append({
+                    'facebook_page': facebook_page,
+                    'edited_image': image_content,
+                    'template_image': template,
+                    'translated_recipe_name_input': recipe_name_input
+                })
+            except Exception as e:
+                print("Error saving edited image: ", str(e))
+                raise e
     except Exception as e:
         print("Exception in applying Template: ", str(e))
         raise e
@@ -314,6 +352,10 @@ def extract_and_resize_alpha_mask(image, output_path=None):
     output_path (str): Path to save the extracted alpha mask image.
     """
     try:
+        # Ensure the image has an alpha channel
+        if image.mode != 'RGBA':
+            image = image.convert('RGBA')
+        
         # image = Image.open(image_path).convert("RGBA")
         alpha = image.split()[3]  # Extract the alpha channel
         
@@ -332,6 +374,10 @@ def extract_and_resize_alpha_mask(image, output_path=None):
         else:
             print("The image is fully transparent or has no transparent regions.")
             return image
+    
+    except IndexError as e:
+        print("Error: The image does not have an alpha channel.")
+        raise e
     
     except Exception as e:
         print(f"Error processing image: {e}")
@@ -356,6 +402,9 @@ def translate(text, source='en' , to = '') -> str:
     '''Return the translated text from "source" to "to" Languge '''
 
     # lt = LibreTranslateAPI("https://translate.terraprint.co/")
+
+    if text and (to == source):
+        return text
 
     if text and to and source:
         try:
@@ -460,8 +509,8 @@ def publish_post(post_page_template: PostFacebookPageTemplate):
     # Update or refresh the Access Token For that Page has been publishing now...
     try:
         token_info  = graph.extend_access_token(
-            app_id= settings.FACEBOOK_APP_ID,
-            app_secret= settings.FACEBOOK_APP_SECRET
+            app_id= facebook_page.app_id,
+            app_secret= facebook_page.app_secret
             )
         facebook_page.access_token = token_info['access_token']
         facebook_page.save()
