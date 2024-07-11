@@ -2,10 +2,10 @@
 from django.db import models
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
-from .utils import list_system_fonts
+from .utils import list_system_fonts, list_user_uploaded_fonts
 
 class Template(models.Model):
-    font_choices = [(font, font) for font in list_system_fonts()]
+    font_choices = [(font, font) for font in list_user_uploaded_fonts()]
 
     TEXT_POSITION_CHOICES = [
         ('top_left', 'Top Left'),
@@ -19,20 +19,26 @@ class Template(models.Model):
         ('bottom_right', 'Bottom Right'),
     ]
 
+    BACKGROUND_POSITION_CHOICES = [
+        ('top' , 'Top'),
+        ('bottom' , 'Bottom'),
+    ]
+
     name = models.CharField(max_length=100)
     font_type = models.CharField(max_length=100, choices=font_choices)
     text_color = models.CharField(max_length=7)  # Hex color code
     text_size = models.IntegerField(
         validators=[MinValueValidator(10), MaxValueValidator(100)],
     )  # Restrict text size between 10 and 100
-    # stroke = models.BooleanField(default=False)
     stroke_thickness = models.IntegerField(
         default=0, validators=[MinValueValidator(0), MaxValueValidator(10)],
         help_text="Test",
-    )  # Restrict stroke thickness between 1 and 10
+    )  # Restrict stroke thickness between 0 and 10
     stroke_color = models.CharField(max_length=7, blank=True, null=True)  # Hex color code
     background_image = models.ImageField(upload_to='templates_backgrounds/', blank=True, null=True)
-    text_position = models.CharField(max_length=30, choices=TEXT_POSITION_CHOICES)
+    background_position = models.CharField(max_length=30, choices=BACKGROUND_POSITION_CHOICES, blank=True, null=True)
+    bounding_box = models.JSONField(blank=True, null=True)  # Store bounding box as JSON
+    # text_position = models.CharField(max_length=30, choices=TEXT_POSITION_CHOICES)
 
     def __str__(self):
         return f"Template {self.id} - {self.name}"

@@ -24,6 +24,8 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('posts.urls')),
     path('templates/', include('template_manager.urls')),
+    path('auth/', include('authentication.urls')),
+
     # path('accounts/login/', auth_views.LoginView.as_view(), name='login'),
     # path('accounts/logout/', auth_views.LogoutView.as_view(), name='logout'),
 
@@ -34,3 +36,4 @@ urlpatterns = [
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    urlpatterns += static(settings.TEMP_MEDIA_URL, document_root=settings.TEMP_MEDIA_ROOT)

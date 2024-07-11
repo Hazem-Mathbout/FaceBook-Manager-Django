@@ -15,9 +15,9 @@
         </a>
     </div>
     <div class="card-body">
-        {% if pages %}
+        {% if page_obj %}
         <ul class="list-group">
-            {% for page in pages %}
+            {% for page in page_obj %}
                 <li class="list-group-item">
                     <div class="d-flex justify-content-between align-items-start">
                         <div style="flex: 1;">
@@ -69,6 +69,10 @@
         </div>
         {% endif %}
     </div>
+</div>
+
+<div class="d-flex justify-content-center py-3">
+    {% include 'partials/pagination.html' %}
 </div>
 
 <!-- Include necessary libraries directly in this template -->

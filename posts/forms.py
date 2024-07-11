@@ -14,12 +14,13 @@ class PostForm(forms.ModelForm):
 
     class Meta:
         model = Post
-        fields = ['image', 'description', 'recipe_name', 'publication_time', 'facebook_pages', 'publish_now']
+        fields = ['image', 'description', 'recipe_name', 'publication_time', 'facebook_pages', 'publish_now', 'comment']
         widgets = {
             'publication_time': forms.DateTimeInput(attrs={'type': 'datetime-local'}, format='%Y-%m-%dT%H:%M'),
             'description': forms.Textarea(attrs={'placeholder': 'Enter description here'}),
             'recipe_name': forms.TextInput(attrs={'placeholder': 'Enter recipe name'}),
             'facebook_pages': forms.SelectMultiple(attrs={'placeholder': 'Select Facebook pages'}),
+            'comment': forms.Textarea(attrs={'placeholder': 'Enter comment for your post here'}),
         }
 
     def clean(self):
@@ -67,7 +68,7 @@ class PostForm(forms.ModelForm):
 class PostFacebookPageTemplateForm(forms.ModelForm):
     class Meta:
         model = PostFacebookPageTemplate
-        fields = ['post', 'facebook_page', 'template', 'description', 'recipe_name', 'image']
+        fields = ['post', 'facebook_page', 'template', 'description', 'comment', 'recipe_name', 'image']
         widgets = {
             'template': forms.Select(attrs={'class': 'form-control'}),
         }

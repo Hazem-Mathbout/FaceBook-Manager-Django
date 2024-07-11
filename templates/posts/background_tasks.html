@@ -1,0 +1,130 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Background Tasks{% endblock %}
+
+{% block content %}
+<div class="card mt-4">
+    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+        <h2>Background Tasks</h2>
+        <button id="delete-selected" class="btn btn-danger d-none">Delete Selected</button>
+    </div>
+    <div class="task-list">
+        <form id="taskForm" method="post">
+            {% csrf_token %}
+            {% if page_obj %}
+                {% for task in page_obj %}
+                <div class="task-item card mb-3">
+                    <div class="card-body">
+                        <div class="form-check">
+                            <input class="form-check-input task-checkbox" type="checkbox" value="{{ task.id }}" name="selected_tasks">
+                            <label class="form-check-label">
+                                <h5 class="card-title d-inline-block">Task {{ task.id }}</h5>
+                            </label>
+                        </div>
+                        <p class="card-text">Total Re-Published Posts: {{ task.get_number_posts }}</p>
+                        <p class="card-text">Interval: {{ task.interval_hours }} hours {{ task.interval_minutes }} minutes</p>
+                        <p class="card-text">Publish Now: {{ task.publish_now }}</p>
+                        <p class="card-text">Status: {{ task.status }}%</p>
+                        <p class="card-text">Number of Successful Re-Publishing: {{ task.number_succes_logs }}</p>
+                        <p class="card-text publication-time">
+                            Publication Time: {% if task.publication_time %}{{ task.publication_time|date:'Y-m-d\TH:i:s\Z' }}{% else %}unknown{% endif %}
+                        </p>
+                        <p class="card-text created-at">
+                            Created At: {{ task.created_at|date:'Y-m-d\TH:i:s\Z' }}</p>
+                        <p class="card-text updated-at">
+                            Updated At: {{ task.updated_at|date:'Y-m-d\TH:i:s\Z' }}</p>
+                        <div class="progress">
+                            <div class="progress-bar" role="progressbar" style="width: {{ task.status }}%;" aria-valuenow="{{ task.status }}" aria-valuemin="0" aria-valuemax="100">{{ task.status }}%</div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="task-item card mb-3">
+                    <div class="card-body">
+                        <table class="table">
+                            <tbody>
+                                <tr>
+                                    <td colspan="7" class="text-center">No Background Task available</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            {% endif %}
+        </form>
+    </div>
+</div>
+
+<div class="d-flex justify-content-center py-3">
+    {% include 'partials/pagination.html' %}
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var publicationTimes = document.querySelectorAll('.publication-time');
+        var createdAts = document.querySelectorAll('.created-at');
+        var updatedAts = document.querySelectorAll('.updated-at');
+
+        publicationTimes.forEach(function(element) {
+            var utcTime = element.textContent.trim().replace('Publication Time: ', '');
+            if (utcTime !== 'unknown' && utcTime.trim().length > 0) {
+                var localTime = new Date(utcTime).toLocaleString();
+                element.textContent = 'Publication Time: ' + localTime;
+            }
+        });
+
+        createdAts.forEach(function(element) {
+            var utcTime = element.textContent.trim().replace('Created At: ', '');
+            if (utcTime !== 'unknown' && utcTime.trim().length > 0) {
+                var localTime = new Date(utcTime).toLocaleString();
+                element.textContent = 'Created At: ' + localTime;
+            }
+        });
+
+        updatedAts.forEach(function(element) {
+            var utcTime = element.textContent.trim().replace('Updated At: ', '');
+            if (utcTime !== 'unknown' && utcTime.trim().length > 0) {
+                var localTime = new Date(utcTime).toLocaleString();
+                element.textContent = 'Updated At: ' + localTime;
+            }
+        });
+
+        // Handle checkbox changes
+        var checkboxes = document.querySelectorAll('.task-checkbox');
+        var deleteButton = document.getElementById('delete-selected');
+
+        checkboxes.forEach(function(checkbox) {
+            checkbox.addEventListener('change', function() {
+                var anyChecked = Array.from(checkboxes).some(function(checkbox) {
+                    return checkbox.checked;
+                });
+                deleteButton.classList.toggle('d-none', !anyChecked);
+            });
+        });
+
+        // Handle delete action
+        deleteButton.addEventListener('click', function() {
+            var selectedTasks = Array.from(checkboxes).filter(function(checkbox) {
+                return checkbox.checked;
+            }).map(function(checkbox) {
+                return checkbox.value;
+            });
+
+            if (selectedTasks.length > 0) {
+                if (confirm('Are you sure you want to delete the selected tasks?')) {
+                    var form = document.getElementById('taskForm');
+                    var hiddenInput = document.createElement('input');
+                    hiddenInput.type = 'hidden';
+                    hiddenInput.name = 'delete_tasks';
+                    hiddenInput.value = JSON.stringify(selectedTasks);
+                    form.appendChild(hiddenInput);
+                    form.submit();
+                }
+            }
+        });
+    });
+</script>
+
+{% endblock %}

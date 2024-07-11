@@ -144,6 +144,21 @@ border: 2px red solid;
     display: block;
 }
 
+.errornote {
+    color: red;
+    border: 1px solid red;
+    padding: 10px;
+    background-color: #fdd;
+}
+
+.form-row.errors {
+    color: red;
+}
+
+.form-row.errors input {
+    border: 1px solid red;
+}
+
 
 /* Add a maximum width to the page details */
 /* .text-truncate {

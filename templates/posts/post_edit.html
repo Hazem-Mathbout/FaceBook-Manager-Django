@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load form_tags %}
+
+{% block title %}Edit Post{% endblock %}
+
+{% block content %}
+<div class="card mt-4">
+    <div class="card-header bg-primary text-white">
+        <h2>Edit Post</h2>
+    </div>
+    <div class="card-body">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            {% include 'partials/form.html' with form=form buttons=buttons %}
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // Capture the user's timezone
+        document.getElementById('user-timezone').value = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    });
+</script>
+{% endblock %}

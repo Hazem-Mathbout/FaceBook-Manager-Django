@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Live Preview{% endblock %}
+
+{% block content %}
+<style>
+    .extra-space {
+        margin-bottom: 40px; /* Adjust the value as needed */
+    }
+</style>
+
+<div class="container-fluid mt-5">
+    <h2 class="text-center mb-4">Live Preview</h2>
+    <div class="form-group text-center">
+        {% csrf_token %}
+        <label for="previewText" class="form-label">Enter Text for Preview</label>
+        <textarea id="previewText" class="form-control" rows="4"></textarea>
+    </div>
+
+    <!-- Dummy form fields (hidden) -->
+    <form id="yourFormId" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {% for field in form %}
+            <div class="hidden-field" style="display: none;" >{{ field }}</div> {# Wrap each field in a hidden div #}
+        {% endfor %}
+    </form>
+    
+    <div class="text-center mb-3">
+        <button id="previewButton" class="btn btn-primary">Preview</button>
+    </div>
+    <div id="loadingIndicator" class="text-center" style="display: none;">
+        <div class="spinner-border text-primary" role="status" style="width: 4rem; height: 4rem;">
+            <span class="sr-only">Loading...</span>
+        </div>
+        <p class="mt-2">Loading...</p>
+    </div>
+    <div id="previewImageContainer" class="text-center mt-3 extra-space">
+        {% if background_image_url %}
+            <img id="backgroundImage" src="{{ background_image_url }}" class="img-fluid" style="max-width: 100%; max-height: 100vh;">
+        {% endif %}
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const previewButton = document.getElementById('previewButton');
+        const previewText = document.getElementById('previewText');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const backgroundImage = document.getElementById('backgroundImage');
+
+        // Extract the file name from the src
+        const backgroundImageUrl = backgroundImage ? backgroundImage.src.split('/').pop() : '';
+        
+        // Dynamically assign an id to the form only if it exists
+        const form = document.getElementById('yourFormId');
+
+        if (previewButton) {
+            previewButton.addEventListener('click', function() {
+                // Show loading indicator
+                loadingIndicator.style.display = 'block';
+
+                const text = previewText.value;
+                const formData = new FormData(form); // Create FormData object
+
+                fetch('{% url "generate_preview_image" %}', {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                    body: JSON.stringify({
+                        text: text,
+                        backgroundImageUrl: backgroundImageUrl,
+                        formData: Object.fromEntries(formData.entries()), // Convert FormData to object
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    loadingIndicator.style.display = 'none'; // Hide loading indicator
+                    if (data.error) {
+                        // Display error message
+                        alert(`Error generating preview image: ${data.error}`);
+                    } else {
+                        const imageData = data.image_url;
+                        // Display the generated image
+                        const imgElement = document.createElement('img');
+                        imgElement.src = imageData;
+                        imgElement.classList.add('img-fluid');
+                        imgElement.style.maxWidth = '100%';
+                        imgElement.style.maxHeight = '100vh';
+                        previewImageContainer.innerHTML = ''; // Clear previous content
+                        previewImageContainer.appendChild(imgElement);
+                    }
+                })
+                .catch(error => {
+                    loadingIndicator.style.display = 'none'; // Hide loading indicator
+                    {% comment %} console.error('Error generating preview image:', error); {% endcomment %}
+                    
+                    // Extract the error message
+                    let errorMessage = 'Failed to generate preview image.';
+                    if (error && error.message) {
+                        errorMessage = error.message;
+                    } else if (typeof error === 'string') {
+                        errorMessage = error; // In case error is a string
+                    }
+                    
+                    // Display the error message in an alert
+                    alert(errorMessage);
+                });
+            });
+        }
+    });
+</script>
+{% endblock %}

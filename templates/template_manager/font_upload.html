@@ -1,0 +1,28 @@
+<!-- template_manager/font_upload.html -->
+
+{% extends 'base.html' %}
+{% load form_tags %}
+{% block title %}Upload Fonts{% endblock %}
+{% block content %}
+<div class="card mt-4">
+    <div class="card-header bg-primary text-white">
+        <h2>Upload Fonts</h2>
+    </div>
+    <div class="card-body">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <label for="{{ form.fonts.id_for_label }}" class="form-label">{{ form.fonts.label }}</label>
+            {{ form.fonts|as_bootstrap }}
+            {% if form.fonts.errors %}
+                <div class="alert alert-danger mt-2">
+                    {% for error in form.fonts.errors %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <button type="submit" class="btn btn-success mt-5">Upload Fonts</button>
+        </form>
+    </div>
+</div>
+{% endblock %} 

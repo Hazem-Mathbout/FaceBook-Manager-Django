@@ -49,19 +49,16 @@ class Post(models.Model):
     description = models.TextField()
     recipe_name = models.CharField(max_length=100)
     publication_time = models.DateTimeField(blank=True, null=True)  # Allow null/blank for immediate posts
-    # recurring_schedule = models.CharField(max_length=100, blank=True, null=True)
     facebook_pages = models.ManyToManyField(FacebookPage, through='PostFacebookPageTemplate')
     # facebook_pages = models.ManyToManyField(FacebookPage)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     publish_now = models.BooleanField(default=False)  # New field to indicate immediate publication
+    comment = models.TextField(null=True, blank=True)
 
     def __str__(self):
         return self.recipe_name
 
     def save(self, *args, **kwargs):
-        # if self.publish_now:
-        #     self.publication_time = None  # Clear publication_time if publishing immediately
-        # else:
         if not self.publication_time and not self.publish_now:
             raise ValidationError({"publication_time": "Publication time must be set if not publishing immediately."})
 
@@ -73,6 +70,7 @@ class PostFacebookPageTemplate(models.Model):
     facebook_page = models.ForeignKey(FacebookPage, on_delete=models.CASCADE)
     template = models.ForeignKey(Template, on_delete=models.SET_NULL, null=True, blank=False)
     description = models.TextField(null=True, blank=True)
+    comment = models.TextField(null=True, blank=True)
     recipe_name = models.CharField(max_length=100, null=True, blank=True)
     image = models.ImageField(upload_to='post_page_templates/', blank=True, null=True)
     # Add status filed.
@@ -94,3 +92,31 @@ class PostLog(models.Model):
 
     def __str__(self):
         return f"{self.post_page_template.post.recipe_name} by {self.user.username}"
+
+class BackgroundTask(models.Model):
+    publication_time = models.DateTimeField(null=True, blank=True)
+    interval_hours = models.IntegerField()
+    interval_minutes = models.IntegerField()
+    publish_now = models.BooleanField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    status = models.IntegerField(default=0)  # Percentage of completion
+    number_succes_logs = models.IntegerField(default=0)
+
+    # Relationships to selected logs and Facebook pages
+    selected_logs = models.ManyToManyField(PostLog, related_name='background_tasks')
+    facebook_pages = models.ManyToManyField(FacebookPage, related_name='background_tasks')
+
+    def calculate_status(self):
+        total_logs = self.selected_logs.count()
+        # published_logs = self.selected_logs.filter(post_page_template__is_published=True).count()
+        published_logs = self.number_succes_logs
+        if total_logs > 0:
+            self.status = (published_logs / total_logs) * 100
+        self.save()
+
+    def get_number_posts(self):
+        return self.selected_logs.count()
+
+    def __str__(self):
+        return f"Task {self.id} - {self.status}% complete"

@@ -8,8 +8,165 @@
         <h2>{{ form.instance.pk|yesno:"Update Template,Create Template" }}</h2>
     </div>
     <div class="card-body">
-        {% include 'partials/form.html' with form=form button_text="Save" %}
-        <a href="{% url 'template_list' %}" class="btn btn-secondary mt-3">Back to List</a>
+        <form id="templateForm" method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            {% include 'partials/form.html' with form=form  button_text='Save Template' %}
+            <div class="row mt-3">
+                <div class="col-12">
+                    <button type="button" class="btn btn-success mt-3" id="live-preview-button">Live Preview</button>
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-12">
+                    <a href="{% url 'template_list' %}" class="btn btn-secondary mt-3">Back to List</a>
+                </div>
+            </div>
+            {% comment %} <button type="button" class="btn btn-success mt-3" id="live-preview-button">Live Preview</button> {% endcomment %}
+        </form>
     </div>
 </div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        let ctx;
+        let isDrawing = false;
+        let startX = 0;
+        let startY = 0;
+    
+        function resizeCanvas() {
+            const img = document.getElementById('backgroundImage');
+            const canvas = document.getElementById('boundingBoxCanvas');
+            if (img && canvas) {
+                canvas.width = img.clientWidth;
+                canvas.height = img.clientHeight;
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }
+        }
+    
+        function getMousePos(canvas, evt) {
+            const rect = canvas.getBoundingClientRect();
+            return {
+                x: Math.max(0, Math.min(evt.clientX - rect.left, canvas.width)),
+                y: Math.max(0, Math.min(evt.clientY - rect.top, canvas.height))
+            };
+        }
+    
+        function attachCanvasEvents(canvas) {
+            canvas.addEventListener('mousedown', (e) => {
+                const pos = getMousePos(canvas, e);
+                isDrawing = true;
+                startX = pos.x;
+                startY = pos.y;
+            });
+    
+            canvas.addEventListener('mousemove', (e) => {
+                if (isDrawing) {
+                    const pos = getMousePos(canvas, e);
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    ctx.strokeStyle = 'red';  // Set the color to red
+                    ctx.lineWidth = 3;
+                    ctx.strokeRect(startX, startY, pos.x - startX, pos.y - startY);
+                }
+            });
+    
+            canvas.addEventListener('mouseup', (e) => {
+                if (isDrawing) {
+                    const pos = getMousePos(canvas, e);
+                    isDrawing = false;
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    ctx.strokeStyle = 'red';  // Set the color to red
+                    ctx.lineWidth = 3;
+                    ctx.strokeRect(startX, startY, pos.x - startX, pos.y - startY);
+    
+                    const boundingBox = {
+                        x: startX,
+                        y: startY,
+                        width: pos.x - startX,
+                        height: pos.y - startY
+                    };
+                    document.getElementById('id_bounding_box').value = JSON.stringify(boundingBox);
+                }
+            });
+    
+            window.addEventListener('resize', resizeCanvas);
+            resizeCanvas();
+        }
+    
+        document.getElementById('id_background_image').addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = document.createElement('img');
+                    img.id = 'backgroundImage';
+                    img.src = e.target.result;
+                    img.classList.add('img-fluid');
+                    img.onload = function() {
+                        resizeCanvas();
+                    };
+    
+                    const container = document.getElementById('backgroundImageContainer');
+                    container.innerHTML = ''; // Clear any existing content
+                    container.appendChild(img);
+    
+                    // Create and append the canvas
+                    const newCanvas = document.createElement('canvas');
+                    newCanvas.id = 'boundingBoxCanvas';
+                    newCanvas.style.position = 'absolute';
+                    newCanvas.style.top = '0';
+                    newCanvas.style.left = '0';
+                    container.appendChild(newCanvas);
+    
+                    // Update the canvas context
+                    ctx = newCanvas.getContext('2d');
+                    resizeCanvas();
+    
+                    // Attach event listeners to the new canvas
+                    attachCanvasEvents(newCanvas);
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    
+        // Attach events to the initial canvas if it exists
+        const initialCanvas = document.getElementById('boundingBoxCanvas');
+        if (initialCanvas) {
+            ctx = initialCanvas.getContext('2d');
+            attachCanvasEvents(initialCanvas);
+        }
+
+
+
+        document.getElementById('live-preview-button').addEventListener('click', function() {
+            const formData = new FormData(document.getElementById('templateForm'));
+            const backgroundImage = document.getElementById('backgroundImage');
+            
+            // Check if backgroundImage element exists and has a src attribute
+            if (backgroundImage && backgroundImage.src) {
+                formData.append('background_image_url', backgroundImage.src);
+            }
+
+            fetch('{% url "live_preview" %}', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.text())
+            .then(data => {
+                const newWindow = window.open();
+                newWindow.document.open();
+                newWindow.document.write(data);
+                newWindow.document.close();
+            })
+            .catch(error => {
+                console.error('Error during live preview:', error);
+                alert('Failed to perform live preview.');
+            });
+        });
+
+    });
+
+</script>
 {% endblock %}

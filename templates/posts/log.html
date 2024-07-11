@@ -11,6 +11,440 @@
 <div class="card mt-4">
     <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
         <h2>Post Log</h2>
+        <div>
+            <button type="button" class="btn btn-light" id="toggleFilterButton" style="border-radius: 25px; padding: 0.5em 1em;">
+                <i class="fas fa-filter"></i> Filters Search
+            </button>
+            <button type="button" class="btn btn-success" id="rePublishButton" style="display: none; border-radius: 25px; padding: 0.5em 1em;" data-bs-toggle="modal" data-bs-target="#republishModal">
+                <i class="fas fa-redo"></i> Re-Publish Posts
+            </button>
+            <button type="button" class="btn btn-danger" id="deleteButton" style="display: none; border-radius: 25px; padding: 0.5em 1em;">
+                <i class="fas fa-trash"></i> Delete Selected Posts
+            </button>
+        </div>
+    </div>
+    <div class="card-body">
+        <div id="filterFormContainer" style="display: none;">
+            <form method="GET" id="filterForm">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="id_start_date">Start Date</label>
+                        {{ form.start_date|as_bootstrap }}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="id_end_date">End Date</label>
+                        {{ form.end_date|as_bootstrap }}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="id_facebook_page" class="form-label">Facebook Page</label>
+                        {{ form.facebook_page }}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="id_user" class="form-label">User</label>
+                        {{ form.user }}
+                    </div>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <button type="submit" class="btn btn-primary" id="applyFiltersButton">Apply Filters</button>
+                    <button type="button" class="btn btn-secondary" id="clearFiltersButton">Clear Filters</button>
+                </div>
+            </form>
+        </div>
+
+        <form id="selectedPostsForm">
+            <table class="table table-striped mt-4">
+                <thead>
+                    <tr>
+                        <th><input type="checkbox" id="selectAll"></th>
+                        <th>Image</th>
+                        <th>Publisher's Name</th>
+                        <th>Publication Date</th>
+                        <th>Recipe Name</th>
+                        <th>Facebook Page</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in page_obj %}
+                        <tr>
+                            <td><input type="checkbox" name="selected_posts" value="{{ log.id }}" class="post-checkbox"></td>
+                            <td>
+                                <img src="{{ log.post_page_template.post.image.url }}" alt="{{ log.post_page_template.post.recipe_name }}" width="75" style="cursor: zoom-in;" onclick="showImageModal('{{ log.post_page_template.post.image.url }}', '{{ log.post_page_template.post.recipe_name }}')">
+                            </td>
+                            <td class="text-truncate">{{ log.post_page_template.post.user.username }}</td>
+                            <td data-utc-time="{{ log.post_page_template.post.publication_time|date:'Y-m-d\TH:i:s\Z' }}">{{ log.post_page_template.post.publication_time|default_if_none:"unknown" }}</td>
+                            <td class="text-truncate">{{ log.post_page_template.post.recipe_name }}</td>
+                            <td class="text-truncate">{{ log.post_page_template.facebook_page.name }}</td>
+                            <td>
+                                {% if log.post_page_template.is_published %}
+                                    <i class="fas fa-check-circle text-success" data-bs-toggle="tooltip" data-bs-placement="top" title="{{ log.post_page_template.failure_message }}"></i>
+                                {% else %}
+                                    <i class="fas fa-times-circle text-danger" data-bs-toggle="tooltip" data-bs-placement="top" title="{{ log.post_page_template.failure_message }}"></i>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{% url 'edit_post_log' log.id %}" class="btn btn-warning">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center">No logs available</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </form>
+    </div>
+
+    <!-- Modal for re-publishing posts -->
+    <div class="modal fade" id="republishModal" tabindex="-1" aria-labelledby="republishModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="republishModalLabel">Re-Publish Posts</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    {% csrf_token %}
+                    <form id="republishForm">
+                        <div class="mb-3">
+                            <label for="totalSelected" class="form-label">Total Number of Selected Posts</label>
+                            <input type="text" id="totalSelected" class="form-control" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label for="publicationTime" class="form-label">Publication Time</label>
+                            <input type="datetime-local" id="publicationTime" class="form-control">
+                        </div>
+                        <div class="mb-3">
+                            <label for="intervalTime" class="form-label">Interval Time</label>
+                            <div class="d-flex">
+                                <select id="intervalHours" class="form-select me-2">
+                                    <option value="0">0 hours</option>
+                                    <option value="1">1 hour</option>
+                                    <option value="2">2 hours</option>
+                                    <option value="3">3 hours</option>
+                                    <!-- Add more options as needed -->
+                                </select>
+                                <select id="intervalMinutes" class="form-select">
+                                    <option value="0">0 minutes</option>
+                                    <option value="5">5 minutes</option>
+                                    <option value="15">15 minutes</option>
+                                    <option value="30">30 minutes</option>
+                                    <option value="45">45 minutes</option>
+                                    <!-- Add more options as needed -->
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="facebookPages" class="form-label">Facebook Pages</label>
+                            <select id="facebookPages" class="form-select" multiple>
+                                {% for page in form.facebook_page.field.queryset %}
+                                    <option value="{{ page.id }}">{{ page.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-check mb-3">
+                            <input type="checkbox" class="form-check-input" id="publishNow">
+                            <label class="form-check-label" for="publishNow">Publish Now</label>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <button type="button" class="btn btn-primary" id="runTaskButton">Run This Task in Background</button>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Back</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for image preview -->
+    <div class="modal fade" id="imagemodal" tabindex="-1" aria-labelledby="imagemodalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="imagemodalLabel">Image Preview</h5>
+                    <button type="button" class="btn btn-secondary" id="customCloseButton">Close</button>
+                </div>
+                <div class="modal-body text-center">
+                    <img src="" id="imagepreview" class="img-fluid" alt="Image Preview">
+                    <p id="imagecaption" class="mt-2"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="d-flex justify-content-center py-3">
+    {% include 'partials/pagination.html' %}
+</div>
+
+<!-- Add the Select2 CSS -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
+
+<!-- Add jQuery (required by Select2) -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<!-- Add the Select2 JavaScript -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+
+<!-- Add Bootstrap Tooltip JavaScript -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    function showImageModal(imageUrl, imageCaption) {
+        document.getElementById('imagepreview').src = imageUrl;
+        document.getElementById('imagecaption').textContent = imageCaption;
+        var myModal = new bootstrap.Modal(document.getElementById('imagemodal'));
+        myModal.show();
+
+        document.getElementById('customCloseButton').addEventListener('click', function() {
+            myModal.hide();
+        });
+    }
+
+    $(document).ready(function() {
+        $('#facebookPages').select2({
+            placeholder: 'Select Facebook Pages',
+            allowClear: true,
+            width: '100%'
+        });
+        $('#id_facebook_page').select2({
+            placeholder: 'Select Facebook Pages',
+            allowClear: true,
+            multiple: true,
+            width: '100%'
+        });
+        $('#id_user').select2({
+            placeholder: 'Select Users',
+            allowClear: true,
+            multiple: true,
+            width: '100%'
+        });
+
+        // Toggle filter form visibility
+        $('#toggleFilterButton').on('click', function() {
+            $('#filterFormContainer').slideToggle();
+        });
+
+        // Clear Filters
+        document.getElementById('clearFiltersButton').addEventListener('click', function() {
+            // Reset the form fields
+            document.getElementById('filterForm').reset();
+        
+            // Clear Select2 fields
+            $('#id_facebook_page').val(null).trigger('change');
+            $('#id_user').val(null).trigger('change');
+        
+            // Reload the page
+            window.location.href = window.location.pathname;
+        });
+
+        // Initialize Bootstrap tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+
+        // Check if text is truncated and add tooltip
+        $('td').each(function() {
+            var $td = $(this);
+            if ($td[0].scrollWidth > $td.innerWidth()) {
+                $td.attr('data-bs-toggle', 'tooltip').tooltip({
+                    container: 'body',
+                    title: $td.text().trim(),
+                    placement: 'top'
+                });
+            }
+        });
+
+        // Convert publication time to local time
+        document.querySelectorAll('td[data-utc-time]').forEach(function(td) {
+            var utcTime = td.getAttribute('data-utc-time');
+            if (utcTime !== 'unknown' && utcTime.trim().length > 0) {
+                var localTime = new Date(utcTime).toLocaleString();
+                td.textContent = localTime;
+            }else{
+                td.textContent = "unknown"
+            }
+        });
+
+        // Handle select all checkboxes
+        $('#selectAll').on('click', function() {
+            $('.post-checkbox').prop('checked', this.checked);
+            toggleActionButtons();
+        });
+
+        // Handle individual checkbox change
+        $('.post-checkbox').on('change', function() {
+            var allChecked = $('.post-checkbox:checked').length === $('.post-checkbox').length;
+            $('#selectAll').prop('checked', allChecked);
+            toggleActionButtons();
+        });
+
+        function toggleActionButtons() {
+            if ($('.post-checkbox:checked').length > 0) {
+                $('#rePublishButton').show();
+                $('#deleteButton').show();
+            } else {
+                $('#rePublishButton').hide();
+                $('#deleteButton').hide();
+            }
+        }
+
+
+        // Handle the delete button click
+        $('#deleteButton').on('click', function() {
+            var selectedPosts = $('.post-checkbox:checked').map(function() {
+                return $(this).val();
+            }).get();
+
+            if (confirm('Are you sure you want to delete the selected posts?')) {
+                $.ajax({
+                    type: 'POST',
+                    url: '{% url "delete_posts" %}', // Ensure this URL is correct
+                    data: {
+                        'selectedPosts': selectedPosts,
+                        'csrfmiddlewaretoken': $('input[name="csrfmiddlewaretoken"]').val()
+                    },
+                    success: function(response) {
+                        // Handle success response
+                        var message = response.success || 'Posts deleted successfully!';
+                        alert(message);
+                        window.location.reload();
+                    },
+                    error: function(response) {
+                        // Handle error response
+                        var errorMessage = 'An error occurred. Please try again.';
+                        if (response.responseJSON && response.responseJSON.error) {
+                            errorMessage = response.responseJSON.error;
+                        }
+                        alert(errorMessage);
+                    }
+                });
+            }
+        });
+
+        // Populate re-publish modal with selected posts info
+        $('#rePublishButton').on('click', function() {
+            var selectedPosts = $('.post-checkbox:checked').map(function() {
+                return $(this).val();
+            }).get();
+
+            $('#totalSelected').val(selectedPosts.length);
+            $('#republishForm').data('selected-posts', selectedPosts);
+        });
+
+        // Handle the run task button click
+        $('#runTaskButton').on('click', function() {
+            var selectedPosts = $('#republishForm').data('selected-posts');
+            var publicationTime = $('#publicationTime').val();
+            var intervalHours = $('#intervalHours').val();
+            var intervalMinutes = $('#intervalMinutes').val();
+            var intervalTime = intervalHours + ' hours ' + intervalMinutes + ' minutes';
+            var facebookPages = $('#facebookPages').val();
+            var publishNow = $('#publishNow').prop('checked');
+            var userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        
+            // Here you would send the data to your backend for processing
+            // For demonstration, we'll just log it to the console
+            console.log({
+                selectedPosts: selectedPosts,
+                publicationTime: publicationTime,
+                intervalTime: intervalTime,
+                facebookPages: facebookPages,
+                publishNow: publishNow,
+                userTimezone: userTimezone
+            });
+
+            // Prepare the data to send
+            var data = {
+                'selectedLogs': selectedPosts,
+                'publicationTime': publicationTime,
+                'intervalTime': intervalTime,
+                'intervalHours': intervalHours,
+                'intervalMinutes': intervalMinutes,
+                'facebookPages': facebookPages,
+                'publishNow': publishNow,
+                'userTimezone': userTimezone,  // Add the timezone here
+                'csrfmiddlewaretoken': $('input[name="csrfmiddlewaretoken"]').val()
+            };
+
+            $.ajax({
+                type: 'POST',
+                url: '{% url "republish_posts" %}', // Ensure this URL is correct
+                data: data,
+                
+                success: function(response) {
+                    // Handle success response
+                    var message = response.success || 'Posts scheduled for republishing!';
+                    alert(message);
+                    $('#republishModal').modal('hide');
+                    window.location.href = window.location.pathname;
+                },
+                error: function(response) {
+                    // Handle error response
+                    var errorMessage = 'An error occurred. Please try again.';
+                    if (response.responseJSON && response.responseJSON.error) {
+                        errorMessage = response.responseJSON.error;
+                    }
+                    alert(errorMessage);
+                }
+            });
+        
+            {% comment %} // Close the modal {% endcomment %}
+            {% comment %} $('#republishModal').modal('hide'); {% endcomment %}
+            // Reload the page
+            
+        });
+    });
+
+    // Function to close the modal manually
+    function closeModal() {
+        var modalElement = document.getElementById('imagemodal');
+        var modalInstance = bootstrap.Modal.getInstance(modalElement); // Get the Bootstrap modal instance
+        modalInstance.hide();
+    }
+
+    // Add event listener to the custom close button
+    document.getElementById('customCloseButton').addEventListener('click', closeModal);
+
+</script>
+
+<style>
+    .text-truncate {
+        max-width: 100px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+</style>
+
+{% endblock %}
+
+
+
+
+
+
+
+
+
+
+{% comment %} <!-- templates/posts/log.html -->
+
+{% extends 'base.html' %}
+{% load static %}
+{% load form_tags %}
+{% load form_filters %}
+
+{% block title %}Post Log{% endblock %}
+
+{% block content %}
+<div class="card mt-4">
+    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+        <h2>Post Log</h2>
         <button type="button" class="btn btn-light" id="toggleFilterButton" style="border-radius: 25px; padding: 0.5em 1em;">
             <i class="fas fa-filter"></i> Filters Search
         </button>
@@ -55,7 +489,7 @@
                 </tr>
             </thead>
             <tbody>
-                {% for log in logs %}
+                {% for log in page_obj %}
                     <tr>
                         <td>
                             <img src="{{ log.post_page_template.post.image.url }}" alt="{{ log.post_page_template.post.recipe_name }}" width="75" style="cursor: zoom-in;" onclick="showImageModal('{{ log.post_page_template.post.image.url }}', '{{ log.post_page_template.post.recipe_name }}')">
@@ -66,7 +500,7 @@
                         <td class="text-truncate">{{ log.post_page_template.facebook_page.name }}</td>
                         <td>
                             {% if log.post_page_template.is_published %}
-                                <i class="fas fa-check-circle text-success" data-bs-toggle="tooltip" data-bs-placement="top" title="Successfully published"></i>
+                                <i class="fas fa-check-circle text-success" data-bs-toggle="tooltip" data-bs-placement="top" title="{{ log.post_page_template.failure_message }}"></i>
                             {% else %}
                                 <i class="fas fa-times-circle text-danger" data-bs-toggle="tooltip" data-bs-placement="top" title="{{ log.post_page_template.failure_message }}"></i>
                             {% endif %}
@@ -96,6 +530,10 @@
             </div>
         </div>
     </div>
+</div>
+
+<div class="d-flex justify-content-center py-3">
+    {% include 'partials/pagination.html' %}
 </div>
 
 <!-- Add the Select2 CSS -->
@@ -202,188 +640,5 @@
         text-overflow: ellipsis;
     }
 </style>
-
-{% endblock %}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-{% comment %} <!-- templates/posts/log.html -->
-
-{% extends 'base.html' %}
-{% load static %}
-{% load form_tags %}
-{% load form_filters %}
-
-{% block title %}Post Log{% endblock %}
-
-{% block content %}
-<div class="card mt-4">
-    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-        <h2>Post Log</h2>
-        <button type="button" class="btn btn-light" data-bs-toggle="modal" data-bs-target="#filterModal" style="border-radius: 25px; padding: 0.5em 1em;">
-            <i class="fas fa-filter"></i> Filters Search
-        </button>
-    </div>
-    <div class="card-body">
-
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>Image</th>
-                    <th>Publisher's Name</th>
-                    <th>Publication Date</th>
-                    <th>Recipe Name</th>
-                    <th>Facebook Page</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for log in logs %}
-                    <tr>
-                        <td>
-                            <img src="{{ log.post_page_template.image.url }}" alt="{{ log.post_page_template.recipe_name }}" width="75" style="cursor:zoom-in" onclick="showImageModal('{{ log.post_page_template.image.url }}', '{{ log.post_page_template.recipe_name }}')">
-                        </td>
-                        <td>{{ log.post_page_template.post.user.username }}</td>
-                        <td>{{ log.post_page_template.post.publication_time }}</td>
-                        <td>{{ log.post_page_template.recipe_name }}</td>
-                        <td>{{ log.post_page_template.facebook_page.name }}</td>
-                    </tr>
-                {% empty %}
-                    <tr>
-                        <td colspan="5" class="text-center">No logs available</td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-
-    <!-- Modal for image preview -->
-    <div class="modal fade" id="imagemodal" tabindex="-1" aria-labelledby="imagemodalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="imagemodalLabel">Image Preview</h5>
-                    <button type="button" class="btn btn-secondary" id="customCloseButton">Close</button>
-                </div>
-                <div class="modal-body text-center">
-                    <img src="" id="imagepreview" class="img-fluid" alt="Image Preview">
-                    <p id="imagecaption" class="mt-2"></p>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Filter Modal -->
-<div class="modal fade" id="filterModal" tabindex="-1" aria-labelledby="filterModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="filterModalLabel">Filter Options</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">Close</button>
-            </div>
-            <div class="modal-body">
-                <form method="GET" id="filterForm">
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="id_start_date">Start Date</label>
-                            {{ form.start_date|as_bootstrap }}
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="id_end_date">End Date</label>
-                            {{ form.end_date|as_bootstrap }}
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="id_facebook_page">Facebook Page</label>
-                            {{ form.facebook_page }}
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="id_user">User</label>
-                            {{ form.user }}
-                        </div>
-                    </div>
-                    <div class="d-flex justify-content-between">
-                        <button type="submit" class="btn btn-primary" id="customCloseButton">Apply Filters</button>
-                        <button type="button" class="btn btn-secondary" id="clearFiltersButton">Clear Filters</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-
-
-<!-- Add the Select2 CSS and JS -->
-<!-- Add the Select2 CSS -->
-<link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
-
-<!-- Add jQuery (required by Select2) -->
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
-<!-- Add the Select2 JavaScript -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
-
-<script>
-    function showImageModal(imageUrl, imageCaption) {
-        document.getElementById('imagepreview').src = imageUrl;
-        document.getElementById('imagecaption').textContent = imageCaption;
-        var myModal = new bootstrap.Modal(document.getElementById('imagemodal'));
-        myModal.show();
-
-        document.getElementById('customCloseButton').addEventListener('click', function() {
-            myModal.hide();
-        });
-    }
-
-    // Initialize Select2
-    $(document).ready(function() {
-        $('#id_facebook_page').select2({
-            placeholder: 'Select Facebook Pages',
-            allowClear: true,
-            multiple: true,
-            width: '100%'
-        });
-        $('#id_user').select2({
-            placeholder: 'Select Users',
-            allowClear: true,
-            multiple: true,
-            width: '100%',
-        });
-    
-        // Other script content
-
-        // Clear Filters
-        document.getElementById('clearFiltersButton').addEventListener('click', function() {
-            // Reset the form fields
-            document.getElementById('filterForm').reset();
-        
-            // Clear Select2 fields
-            $('#id_facebook_page').val(null).trigger('change');
-            $('#id_user').val(null).trigger('change');
-        
-            // Reload the page
-            window.location.href = window.location.pathname;
-        });
-    });
-</script>
 
 {% endblock %} {% endcomment %}

@@ -20,7 +20,6 @@
     {% csrf_token %}
     {% for field in form %}
         <div class="form-group mb-3">
-
             {% if field.name == 'user_timezone' %}
                 <input type="hidden" id="user-timezone" name="user_timezone"  value="">
 
@@ -47,14 +46,14 @@
                 </div>
             
             {% elif field.name == 'access_token' %}
-                <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
-                {% if request.session.access_token %}
-                    <input type="hidden" name="access_token" value="{{ request.session.access_token }}">
-                {% endif %}
-                {{ field|as_bootstrap }}
-                {% for error in field.errors %}
-                    <div class="invalid-feedback d-block">{{ error }}</div>
-                {% endfor %}
+            <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+            {% if request.session.access_token %}
+                <input type="hidden" name="access_token" value="{{ request.session.access_token }}">
+            {% endif %}
+            {{ field|as_bootstrap }}
+            {% for error in field.errors %}
+                <div class="invalid-feedback d-block">{{ error }}</div>
+            {% endfor %}
             
             {% else %}
                 <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
@@ -65,22 +64,40 @@
             {% endif %}
         </div>
     {% endfor %}
+    
+    {% if form.background_image.value %}
+    <div class="form-group mb-3 position-relative" id="backgroundImageContainer">
+        <label for="backgroundImage" class="form-label">Background Image</label>
+        <img id="backgroundImage" src="{{ form.background_image.value.url }}" class="img-fluid">
+        <canvas id="boundingBoxCanvas" style="position:absolute; top:0; left:0;"></canvas>
+    </div>
+    {% else %}
+    <div class="form-group mb-3 position-relative" id="backgroundImageContainer">
+        {% if form.background_image.value %}
+            <label for="backgroundImage" class="form-label">Background Image</label>
+            <img id="backgroundImage" src="{{ form.background_image.value.url }}" class="img-fluid">
+            <canvas id="boundingBoxCanvas" style="position:absolute; top:0; left:0;"></canvas>
+        {% endif %}
+    </div>
+    {% endif %}
 
-    {% comment %} {% if formset.forms %}
-        <!-- Render the formset for PostFacebookPageTemplate -->
-        <h4>Templates for each Facebook Page</h4>
-        {{ formset.management_form }}
-        {% for form in formset %}
-            <div class="form-group mb-3">
-                {{ form.as_p }}
-            </div>
-        {% endfor %}
-    {% endif %} {% endcomment %}
-
-    <button type="submit" class="btn btn-primary mb-3" id="submit-button">
+{% if button_text %}
+    <button type="submit" class="btn btn-primary" id="submit-button">
         {{ button_text }}
         <span id="loading-spinner" class="spinner-border spinner-border-sm" role="status" aria-hidden="true" style="display: none;"></span>
     </button>
+{% endif %}
+
+{% if buttons %}
+        <div class="d-flex justify-content-between">
+            {% for button in buttons %}
+                <button type="submit" name="{{ button.name }}" class="btn {{ button.class }}" id="submit-button">
+                    {{ button.label }}
+                    <span id="loading-spinner" class="spinner-border spinner-border-sm" role="status" aria-hidden="true" style="display: none;"></span>
+                </button>
+            {% endfor %}
+        </div>
+{% endif %}
 
 </form>
 

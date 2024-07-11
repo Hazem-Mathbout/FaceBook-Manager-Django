@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'posts',
     'template_manager',
     'django_select2',
+    'authentication'
 ]
 
 MIDDLEWARE = [
@@ -57,6 +58,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # Alert -> Making all project routes require admin account created.
+    'posts.middleware.AdminRequiredMiddleware',
 ]
 
 ROOT_URLCONF = 'facebook_post_manager.urls'
@@ -90,6 +93,12 @@ STATICFILES_DIRS = [
 
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
+# Add this line to specify the fonts directory
+FONTS_DIR = os.path.join(BASE_DIR, 'static', 'fonts')
+
+if not os.path.exists(FONTS_DIR):
+    os.makedirs(FONTS_DIR)
+
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
@@ -97,3 +106,60 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Media settings
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+
+# Temporary media URL and root
+TEMP_MEDIA_URL = '/media/temp/'
+TEMP_MEDIA_ROOT = os.path.join(MEDIA_ROOT, 'temp')
+
+# Add this line to create a 'temp' directory inside your media folder
+os.makedirs(os.path.join(MEDIA_ROOT, 'temp'), exist_ok=True)
+
+
+
+LOGIN_REDIRECT_URL = 'log'
+
+LANGUAGE_CODE = 'en-us'
+
+TIME_ZONE = 'UTC'
+
+USE_I18N = True
+
+USE_TZ = True
+
+
+CELERY_BROKER_URL = 'redis://localhost:6379/0'
+# CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+# CELERY_ACCEPT_CONTENT = ['json']
+# CELERY_TASK_SERIALIZER = 'json'
+# CELERY_RESULT_SERIALIZER = 'json'
+# CELERY_TIMEZONE = 'UTC'
+
+
+# LOGGING = {
+#     'version': 1,
+#     'disable_existing_loggers': False,
+#     'handlers': {
+#         'console': {
+#             'level': 'DEBUG',
+#             'class': 'logging.StreamHandler',
+#         },
+#     },
+#     'loggers': {
+#         '': {
+#             'handlers': ['console'],
+#             'level': 'DEBUG',
+#             'propagate': True,
+#         },
+#         'django': {
+#             'handlers': ['console'],
+#             'level': 'DEBUG',
+#             'propagate': True,
+#         },
+#         'celery': {
+#             'handlers': ['console'],
+#             'level': 'DEBUG',
+#             'propagate': True,
+#         },
+#     },
+# }
