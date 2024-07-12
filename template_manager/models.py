@@ -2,10 +2,10 @@
 from django.db import models
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
-from .utils import list_system_fonts, list_user_uploaded_fonts
+from .utils import list_system_fonts
 
 class Template(models.Model):
-    font_choices = [(font, font) for font in list_user_uploaded_fonts()]
+    # font_choices = [(font, font) for font in list_user_uploaded_fonts()]
 
     TEXT_POSITION_CHOICES = [
         ('top_left', 'Top Left'),
@@ -25,7 +25,8 @@ class Template(models.Model):
     ]
 
     name = models.CharField(max_length=100)
-    font_type = models.CharField(max_length=100, choices=font_choices)
+    # font_type = models.CharField(max_length=100, choices=font_choices)
+    font_type = models.CharField(max_length=255)
     text_color = models.CharField(max_length=7)  # Hex color code
     text_size = models.IntegerField(
         validators=[MinValueValidator(10), MaxValueValidator(100)],

@@ -55,6 +55,17 @@
                 <div class="invalid-feedback d-block">{{ error }}</div>
             {% endfor %}
             
+            {% elif field.name == 'font_type' %}
+                <label for="id_font_type">Font type:</label>
+                <select name="font_type" class="form-control" maxlength="255" id="id_font_type">
+                    {% for value, label in form.fields.font_type.choices %}
+                        <option value="{{ value }}" {% if value == form.initial.font_type %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+                {% for error in field.errors %}
+                    <div class="invalid-feedback d-block">{{ error }}</div>
+                {% endfor %}
+
             {% else %}
                 <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
                 {{ field|as_bootstrap }}

@@ -1,5 +1,6 @@
 from django import forms
 from .models import Template
+from .utils import list_user_uploaded_fonts
 
 class TemplateForm(forms.ModelForm):
     class Meta:
@@ -22,7 +23,6 @@ class TemplateForm(forms.ModelForm):
         bounding_box = cleaned_data.get('bounding_box')
         background_image = cleaned_data.get('bounding_box')
 
-
         if not background_image:
             self.add_error('background_image', 'Background image cannot be empty.')
 
@@ -33,6 +33,11 @@ class TemplateForm(forms.ModelForm):
             self.add_error('bounding_box', 'Bounding box cannot be empty.')
 
         return cleaned_data
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        font_choices = [(font, font) for font in list_user_uploaded_fonts()]
+        self.fields['font_type'].choices = font_choices
 
 
 class MultipleFileInput(forms.ClearableFileInput):

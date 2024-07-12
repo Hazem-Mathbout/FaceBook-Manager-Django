@@ -13,10 +13,7 @@ from .forms import TemplateForm, FontUploadForm
 from django.views.generic.detail import DetailView
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
-from django.core.files.storage import default_storage
-from django.core.files.base import ContentFile
 from django.conf import settings
-import shutil
 import os
 
 def template_list(request):
