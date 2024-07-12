@@ -466,11 +466,11 @@ def process_preview_template(template, text: str, bg_img_pth: str):
                 current_line = test_line
             else:
                 wrapped_lines.append(current_line)
-                total_text_height += draw.textbbox((0, 0), current_line, font=font, font_size=int(template.text_size))[3] - draw.textbbox((0, 0), current_line, font=font, font_size=int(template.text_size))[1]
+                total_text_height += draw.textbbox((0, 0), current_line, font=font)[3] - draw.textbbox((0, 0), current_line, font=font,)[1]
                 current_line = word
         if current_line:
             wrapped_lines.append(current_line)
-            total_text_height += draw.textbbox((0, 0), current_line, font=font, font_size=int(template.text_size))[3] - draw.textbbox((0, 0), current_line, font=font, font_size=int(template.text_size))[1]
+            total_text_height += draw.textbbox((0, 0), current_line, font=font,)[3] - draw.textbbox((0, 0), current_line, font=font,)[1]
 
     # Calculate starting Y position for vertical centering
     # start_y = top + (height - total_text_height) / 2
@@ -481,7 +481,7 @@ def process_preview_template(template, text: str, bg_img_pth: str):
     current_height = start_y
     for line in wrapped_lines:
         text_width = draw.textlength(line, font=font,)
-        text_bbox = draw.textbbox((0, 0), line, font=font, font_size=int(template.text_size))
+        text_bbox = draw.textbbox((0, 0), line, font=font,)
         text_height = text_bbox[3] - text_bbox[1]
 
         x_position = left + (width - text_width) / 2
