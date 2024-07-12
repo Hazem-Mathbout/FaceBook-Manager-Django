@@ -18,7 +18,7 @@ DATABASES = {
 }
 
 # CELERY_BROKER_URL = 'redis://localhost:6379/0'
-CELERY_BROKER_URL = 'redis://khohi123456789@localhost:6379/0'
+CELERY_BROKER_URL = 'redis://:khohi123456789@localhost:6379/0'
 # CELERY_BROKER_URL = 'redis://khohi:123456789@localhost:6379/0'
 
 
