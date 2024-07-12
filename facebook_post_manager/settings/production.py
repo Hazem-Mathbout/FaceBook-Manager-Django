@@ -1,7 +1,7 @@
 # settings/production.py
 from .base import *
 
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS =  os.getenv('ALLOWED_HOSTS', default='*').split()
 

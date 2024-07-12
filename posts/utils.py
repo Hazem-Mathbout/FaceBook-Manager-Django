@@ -461,7 +461,7 @@ def process_preview_template(template, text: str, bg_img_pth: str):
         current_line = ""
         for word in words:
             test_line = f"{current_line} {word}".strip()
-            test_width = draw.textlength(test_line, font=font, font_size=int(template.text_size))
+            test_width = draw.textlength(test_line, font=font,)
             if test_width <= width:
                 current_line = test_line
             else:
@@ -480,7 +480,7 @@ def process_preview_template(template, text: str, bg_img_pth: str):
     # Draw the text line by line with spacing
     current_height = start_y
     for line in wrapped_lines:
-        text_width = draw.textlength(line, font=font, font_size=int(template.text_size))
+        text_width = draw.textlength(line, font=font,)
         text_bbox = draw.textbbox((0, 0), line, font=font, font_size=int(template.text_size))
         text_height = text_bbox[3] - text_bbox[1]
 
