@@ -39,11 +39,13 @@ def get_user_font_path(font_name):
         if file_name.lower() == font_name.lower():  # Case insensitive match
             return os.path.join(fonts_dir, f"{file_name}.ttf")
 
+
 def process_preview_template(template, text: str, bg_img_name: str):
-    # Load the background image
+    # Check if bg_img_name is valid
     if not bg_img_name:
         raise ValueError("Template must have a background image.")
-    
+
+    # Load the background image
     try:
         background_image_path = os.path.join(template.background_image.storage.base_location, 'temp', bg_img_name)
         background_image = Image.open(background_image_path)
@@ -54,10 +56,10 @@ def process_preview_template(template, text: str, bg_img_name: str):
 
     # Load the font
     font_path = get_user_font_path(template.font_type)
-    
-    if not os.path.exists(font_path):
+
+    if not font_path or not os.path.exists(font_path):
         raise ValueError("Font file not found.")
-    
+
     font = ImageFont.truetype(font_path, int(template.text_size))
 
     # Create an ImageDraw object
@@ -67,6 +69,14 @@ def process_preview_template(template, text: str, bg_img_name: str):
     if isinstance(template.bounding_box, str):
         bounding_box_dict = json.loads(template.bounding_box)
         bounding_box_tuple = (
+            bounding_box_dict['x'],
+            bounding_box_dict['y'],
+            bounding_box_dict['width'],
+            bounding_box_dict['height']
+        )
+    elif isinstance(template.bounding_box, dict):
+        bounding_box_dict = template.bounding_box
+        bounding_box_tuple = (
             bounding_box_dict['x'], 
             bounding_box_dict['y'], 
             bounding_box_dict['width'], 
@@ -74,11 +84,11 @@ def process_preview_template(template, text: str, bg_img_name: str):
         )
     else:
         bounding_box_tuple = template.bounding_box
-    
+
     if not bounding_box_tuple:
         raise ValueError("Template must have a bounding box.")
-    
-    bounding_box_tuple = tuple(abs(value) for value in bounding_box_tuple)
+
+    bounding_box_tuple = tuple(abs(float(value)) for value in bounding_box_tuple)
     left, top, width, height = bounding_box_tuple
 
     # Draw bounding box for debugging
@@ -95,36 +105,34 @@ def process_preview_template(template, text: str, bg_img_name: str):
         current_line = ""
         for word in words:
             test_line = f"{current_line} {word}".strip()
-            test_width = draw.textlength(test_line, font=font,)
+            test_width = draw.textlength(test_line, font=font)
             if test_width <= width:
                 current_line = test_line
             else:
                 wrapped_lines.append(current_line)
-                total_text_height += draw.textbbox((0, 0), current_line, font=font,)[3] - draw.textbbox((0, 0), current_line, font=font,)[1]
+                total_text_height += draw.textbbox((0, 0), current_line, font=font)[3] - draw.textbbox((0, 0), current_line, font=font)[1]
                 current_line = word
         if current_line:
             wrapped_lines.append(current_line)
-            total_text_height += draw.textbbox((0, 0), current_line, font=font,)[3] - draw.textbbox((0, 0), current_line, font=font,)[1]
+            total_text_height += draw.textbbox((0, 0), current_line, font=font)[3] - draw.textbbox((0, 0), current_line, font=font)[1]
 
-    print("top: ", top)
-    print("height: " , height)
-    print("total_text_height: " , total_text_height)
+    print("top:", top)
+    print("height:", height)
+    print("total_text_height:", total_text_height)
 
     # Calculate starting Y position for vertical centering
-    # start_y = top + (height - total_text_height) / 2
-    # start_y = top + (total_text_height) / 2
     start_y = top
-    print("start_y: " , start_y)
+    print("start_y:", start_y)
 
     # Draw the text line by line with spacing
     current_height = start_y
     for line in wrapped_lines:
-        text_width = draw.textlength(line, font=font,)
-        text_bbox = draw.textbbox((0, 0), line, font=font,)
+        text_width = draw.textlength(line, font=font)
+        text_bbox = draw.textbbox((0, 0), line, font=font)
         text_height = text_bbox[3] - text_bbox[1]
 
         x_position = left + (width - text_width) / 2
-        
+
         # Draw stroke if stroke_thickness > 0
         if int(template.stroke_thickness) > 0:
             draw.text(
@@ -135,7 +143,7 @@ def process_preview_template(template, text: str, bg_img_name: str):
                 stroke_width=int(template.stroke_thickness),
                 stroke_fill=template.stroke_color
             )
-        
+
         # Draw the text
         draw.text(
             (x_position, current_height),
@@ -143,7 +151,7 @@ def process_preview_template(template, text: str, bg_img_name: str):
             font=font,
             fill=template.text_color
         )
-        
+
         current_height += text_height + line_spacing  # Add line spacing
 
         # Check if the next line will fit in the bounding box

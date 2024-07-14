@@ -15,6 +15,9 @@ from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.conf import settings
 import os
+from django.core import serializers
+from django.core.serializers import deserialize
+
 
 def template_list(request):
     templates = Template.objects.all()
@@ -141,8 +144,10 @@ def live_preview(request):
                     filename = fs.save(background_image.name, background_image)
                     background_image_url = settings.TEMP_MEDIA_URL + filename
 
+                template_instance_json = serializers.serialize('json', [template_instance])
+
                 context = {
-                    'template': template_instance,
+                    'template': template_instance_json,
                     'background_image_url': background_image_url,
                     'form': form,
                 }
@@ -152,8 +157,10 @@ def live_preview(request):
         else:
             form = TemplateForm(instance=template_instance)
 
+        template_instance_json = serializers.serialize('json', [template_instance])
+
         context = {
-            'template': template_instance,
+            'template': template_instance_json,
             'background_image_url': template_instance.background_image.url,
             'form': form,
         }
@@ -167,26 +174,14 @@ def generate_preview_image(request):
         data = json.loads(request.body)
         text = data.get('text', '')
         background_image_url = data.get('backgroundImageUrl', '')
-        form_data = data.get('formData', {})  # Retrieve formData from request body
-
-        # Process the form data (if needed)
-        # Example usage: print(form_data.get('field_name', ''))
-        instance = Template(
-            name=form_data.get('name', ''),
-            font_type=form_data.get('font_type', ''),
-            text_color=form_data.get('text_color', ''),
-            text_size=form_data.get('text_size', 0),
-            stroke_thickness=form_data.get('stroke_thickness', 0),
-            stroke_color=form_data.get('stroke_color', ''),
-            background_position=form_data.get('background_position', ''),
-            bounding_box=form_data.get('bounding_box', {}),
-            background_image = background_image_url
-        )
-
+        template = data.get('template', {})
+        template_json = json.dumps(template)
+        template_instance = list(deserialize('json', template_json))[0].object
+        
         try:
             # Call the utility function to generate the image
             edited_image = process_preview_template(
-                template=instance, 
+                template=template_instance, 
                 text=text,
                 bg_img_name=background_image_url
             )

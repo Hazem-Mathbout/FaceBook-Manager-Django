@@ -14,6 +14,7 @@
             <div class="row mt-3">
                 <div class="col-12">
                     <button type="button" class="btn btn-success mt-3" id="live-preview-button">Live Preview</button>
+                    <span id="loading-spinner" class="spinner-border spinner-border-sm" role="status" aria-hidden="true" style="display: none;"></span>
                 </div>
             </div>
             <div class="row mt-3">
@@ -134,8 +135,6 @@
             ctx = initialCanvas.getContext('2d');
             attachCanvasEvents(initialCanvas);
         }
-
-
 
         document.getElementById('live-preview-button').addEventListener('click', function() {
             const formData = new FormData(document.getElementById('templateForm'));
