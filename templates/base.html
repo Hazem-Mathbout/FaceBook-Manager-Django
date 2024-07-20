@@ -8,6 +8,7 @@
     {% load static %}
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="{% static 'styles.css' %}">
+    <link rel="stylesheet" href="{% static 'user_logout.css' %}">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
     <!-- Add Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
@@ -37,6 +38,21 @@
                     <a class="nav-link" href="{% url 'background_tasks' %}">Background Tasks</a>
                 </li>
             </ul>
+            <div class="navbar-nav ml-auto">
+                {% if user.is_authenticated %}
+                    <div class="navbar-user-info">
+                        {% comment %} <div class="circle">{{ user.username|slice:":1" }}</div> {% endcomment %}
+                        <div class="logout-container">
+                            <span>{{ user.username }}</span>
+                            <div class="divider"></div>
+                            <form action="{% url 'custom_logout' %}" method="post" class="form-inline">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-link logout-button">Logout</button>
+                            </form>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
         </div>
     </nav>
 

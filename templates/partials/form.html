@@ -34,7 +34,7 @@
             {% elif field.name == 'templates' %}
                 <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
                 {{ field }}
-                <div id="templates-error" class="invalid-feedback" style="display: none;">At least one Template must be selected For This Page.</div>
+                {% comment %} <div id="templates-error" class="invalid-feedback" style="display: none;">At least one Template must be selected For This Page.</div> {% endcomment %}
 
             {% elif field|is_checkbox %}
                 <div class="form-check">
@@ -95,19 +95,28 @@
 {% if button_text %}
     <button type="submit" class="btn btn-primary" id="submit-button">
         {{ button_text }}
-        <span id="loading-spinner" class="spinner-border spinner-border-sm" role="status" aria-hidden="true" style="display: none;"></span>
+        <span id="publish-spinner" class="spinner-border spinner-border-sm" role="status" aria-hidden="true" style="display: none;"></span>
     </button>
 {% endif %}
 
 {% if buttons %}
-        <div class="d-flex justify-content-between">
-            {% for button in buttons %}
-                <button type="submit" name="{{ button.name }}" class="btn {{ button.class }}" id="submit-button">
-                    {{ button.label }}
-                    <span id="loading-spinner" class="spinner-border spinner-border-sm" role="status" aria-hidden="true" style="display: none;"></span>
-                </button>
-            {% endfor %}
-        </div>
+    <div class="d-flex justify-content-between">
+        {% for button in buttons %}
+            <button type="submit" name="{{ button.name }}" class="btn {{ button.class }}" id="submit-button">
+                {{ button.label }}
+                <span id="spinner-{{ button.label }}"  class="spinner-border spinner-border-sm" role="status" aria-hidden="true" style="display: none;"></span>
+            </button>
+        {% endfor %}
+    </div>
+{% endif %}
+
+{% if save_post_button_text %}
+    <div class="d-flex justify-content-between">
+        <button type="submit" name="save_post" class="btn btn-secondary mt-3" id="submit-button">
+            {{ save_post_button_text }}
+            <span id="save-spinner" class="spinner-border spinner-border-sm" role="status" aria-hidden="true" style="display: none;"></span>
+        </button>
+    </div>
 {% endif %}
 
 </form>
@@ -163,14 +172,14 @@
                     console.log('Form submit button pressed.');
     
                     var facebookPagesSelected = $('#id_facebook_pages').val();
-                    var templatePagesSelected = $('#id_templates').val();
+                    {% comment %} var templatePagesSelected = $('#id_templates').val(); {% endcomment %}
     
                     console.log('Selected Facebook pages:', facebookPagesSelected);
-                    console.log('Selected Template pages:', templatePagesSelected);
+                    {% comment %} console.log('Selected Template pages:', templatePagesSelected); {% endcomment %}
     
                     var hasErrors = false;
     
-                    if (typeof templatePagesSelected != 'undefined') {
+                    {% comment %} if (typeof templatePagesSelected != 'undefined') {
                         if (templatePagesSelected.length === 0) {
                             event.preventDefault();
                             event.stopPropagation();
@@ -179,7 +188,7 @@
                         } else {
                             $('#templates-error').hide();
                         }
-                    }
+                    } {% endcomment %}
     
                     if (typeof facebookPagesSelected != 'undefined') {
                         if (facebookPagesSelected.length === 0) {
@@ -204,12 +213,13 @@
                         console.log('Form has validation errors.');
                         // Hide the spinner and enable the button if there are errors
                         $('#submit-button').attr('disabled', false);
-                        $('#loading-spinner').hide();
+                        $('.spinner-border').hide();
                     } else {
                         console.log('Form validated successfully.');
                         // Show the spinner and disable the button
+                        var clickedButton = $(document.activeElement);
                         $('#submit-button').attr('disabled', true);
-                        $('#loading-spinner').show();
+                        clickedButton.find('.spinner-border').show();
                     }
                 }, false);
             });

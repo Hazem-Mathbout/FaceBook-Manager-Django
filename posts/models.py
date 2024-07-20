@@ -31,7 +31,7 @@ class FacebookPage(models.Model):
     access_token = models.CharField(max_length=255)
     app_id = models.CharField(max_length=100 , null=False, blank=False)
     app_secret = models.CharField(max_length=100, null=False, blank=False)
-    templates = models.ManyToManyField(Template)  # New field to link with Template
+    templates = models.ManyToManyField(Template, null=True, blank=True)  # New field to link with Template
 
     # Add Language Selection for Page tranlation here...
     language = models.CharField(
@@ -54,6 +54,7 @@ class Post(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     publish_now = models.BooleanField(default=False)  # New field to indicate immediate publication
     comment = models.TextField(null=True, blank=True)
+    translate_post = models.BooleanField(default=False)
 
     def __str__(self):
         return self.recipe_name
@@ -97,6 +98,7 @@ class BackgroundTask(models.Model):
     publication_time = models.DateTimeField(null=True, blank=True)
     interval_hours = models.IntegerField()
     interval_minutes = models.IntegerField()
+    idel_time = models.IntegerField(default=1)
     publish_now = models.BooleanField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

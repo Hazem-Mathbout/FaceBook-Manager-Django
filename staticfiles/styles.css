@@ -144,18 +144,17 @@ border: 2px red solid;
     display: block;
 }
 
-
-/* Add a maximum width to the page details */
-/* .text-truncate {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+.errornote {
+    color: red;
+    border: 1px solid red;
+    padding: 10px;
+    background-color: #fdd;
 }
 
-.overflow-auto {
-    overflow: auto;
+.form-row.errors {
+    color: red;
 }
 
-.messages li {
-    transition: opacity 0.5s, transform 0.5s;
-} */
+.form-row.errors input {
+    border: 1px solid red;
+}

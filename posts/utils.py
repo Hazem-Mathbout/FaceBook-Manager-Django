@@ -16,7 +16,7 @@ from django.utils.dateparse import parse_datetime
 from django.utils.timezone import is_aware, make_aware
 from django.conf import settings
 
-def apply_templates_to_image(original_image_path, facebook_pages, org_recipe_name_input):
+def apply_templates_to_image(original_image_path, facebook_pages, org_recipe_name_input, should_translate: bool):
     try:
         # Open the original image
         original_image = Image.open(original_image_path)
@@ -24,34 +24,57 @@ def apply_templates_to_image(original_image_path, facebook_pages, org_recipe_nam
         edited_images = []
 
         for facebook_page in facebook_pages:
-            # Translate text.
-            try:
-                language = facebook_page.language
-                if language != 'en': # 'en' : is the default language.
-                    recipe_name_input = translate(org_recipe_name_input, 'en', language)
-                else:
-                    recipe_name_input = org_recipe_name_input
-            except Exception as e:
-                print("Exception in applying Translation To Template: ", str(e))
-                raise e
+            # Translate text if needed.
+            if should_translate:
+                try:
+                    language = facebook_page.language
+                    if language != 'en':  # 'en' : is the default language.
+                        recipe_name_input = translate(org_recipe_name_input, 'en', language)
+                    else:
+                        recipe_name_input = org_recipe_name_input
+                except Exception as e:
+                    print("Exception in applying Translation To Template: ", str(e))
+                    raise e
+            else:
+                recipe_name_input = org_recipe_name_input
 
             # Get related templates
             templates = facebook_page.templates.all()
 
             if not templates.exists():
-                continue  # Skip if no templates are associated with the Facebook page
-            
+                # No templates, append the original image
+                try:
+                    image_io = BytesIO()
+                    original_image.save(image_io, format='PNG')
+
+                    file_name_without_extension = os.path.splitext(os.path.basename(original_image_path))[0]
+
+                    image_content = ContentFile(image_io.getvalue(), name=f'post_page_templates/{file_name_without_extension}.png')
+
+                    # Append the original image to the list
+                    edited_images.append({
+                        'facebook_page': facebook_page,
+                        'edited_image': image_content,  # ContentFile
+                        'template_image': None,
+                        'translated_recipe_name_input': recipe_name_input
+                    })
+                except Exception as e:
+                    print("Error saving original image: ", str(e))
+                    raise e
+                
+                continue  # Skip to the next Facebook page
+
             # Select a random template
             template = random.choice(templates)
 
             try:
                 procced_bg_image = process_preview_template(
-                template=template,
-                bg_img_pth=template.background_image.path, 
-                text=recipe_name_input
+                    template=template,
+                    bg_img_pth=template.background_image.path, 
+                    text=recipe_name_input
                 )
             except Exception as e:
-                print("Can not process_preview_template: " , str(e))
+                print("Cannot process_preview_template: ", str(e))
                 raise e
 
             if has_alpha(procced_bg_image):
@@ -61,17 +84,17 @@ def apply_templates_to_image(original_image_path, facebook_pages, org_recipe_nam
             edited_image = original_image.copy()
             # draw = ImageDraw.Draw(edited_image)
 
-            # Get Postion For Pasting the Background image on original image.
+            # Get Position For Pasting the Background image on the original image.
             if template.background_position == 'top':
-                bg_postion = (0, 0)
+                bg_position = (0, 0)
             else:
-                _ , img_h = edited_image.size
-                _ , bg_h = procced_bg_image.size
-                bg_postion = (0, img_h - bg_h)
+                _, img_h = edited_image.size
+                _, bg_h = procced_bg_image.size
+                bg_position = (0, img_h - bg_h)
 
-            # Paste the Procced background image into the main image.
+            # Paste the Processed background image into the main image.
             try:
-                edited_image.paste(procced_bg_image, bg_postion, procced_bg_image)
+                edited_image.paste(procced_bg_image, bg_position, procced_bg_image)
             except Exception as e:
                 print("Error pasting background image: ", str(e))
                 raise e
@@ -88,7 +111,7 @@ def apply_templates_to_image(original_image_path, facebook_pages, org_recipe_nam
                 # Append the edited image to the list
                 edited_images.append({
                     'facebook_page': facebook_page,
-                    'edited_image': image_content, # ContentFile
+                    'edited_image': image_content,  # ContentFile
                     'template_image': template,
                     'translated_recipe_name_input': recipe_name_input
                 })
@@ -98,7 +121,7 @@ def apply_templates_to_image(original_image_path, facebook_pages, org_recipe_nam
     except Exception as e:
         print("Exception in applying Template: ", str(e))
         raise e
-    
+
     return edited_images
 
 
@@ -520,8 +543,4 @@ def process_preview_template(template, text: str, bg_img_pth: str):
     # return ContentFile(output.read(), 'edited_image.png')
 
     # ============ New ======================
-    # Save the image to a ContentFile
-    # output = BytesIO()
-    # background_image.save(output, format='PNG')
-    # output.seek(0)
     return background_image

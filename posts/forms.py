@@ -14,7 +14,7 @@ class PostForm(forms.ModelForm):
 
     class Meta:
         model = Post
-        fields = ['image', 'description', 'recipe_name', 'publication_time', 'facebook_pages', 'publish_now', 'comment']
+        fields = ['image', 'description', 'recipe_name', 'publication_time', 'facebook_pages', 'comment', 'translate_post', 'publish_now']
         widgets = {
             'publication_time': forms.DateTimeInput(attrs={'type': 'datetime-local'}, format='%Y-%m-%dT%H:%M'),
             'description': forms.Textarea(attrs={'placeholder': 'Enter description here'}),

@@ -1,6 +1,6 @@
 from django.contrib.auth.forms import AuthenticationForm
 from django.shortcuts import render, redirect
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 
 def custom_admin_login(request):
@@ -19,3 +19,13 @@ def custom_admin_login(request):
         form = AuthenticationForm()
     
     return render(request, 'auth/custom_admin_login.html', {'form': form})
+
+
+def custom_logout(request):
+    if request.method == 'POST':
+        logout(request)
+        messages.success(request, 'You have been logged out successfully.')
+        return redirect('login')  # Redirect to the login page or any other page
+    else:
+        # You might want to redirect users if they try to access this view via GET
+        return redirect('home')  # Redirect to the home page or any other page

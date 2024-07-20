@@ -158,19 +158,3 @@ border: 2px red solid;
 .form-row.errors input {
     border: 1px solid red;
 }
-
-
-/* Add a maximum width to the page details */
-/* .text-truncate {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.overflow-auto {
-    overflow: auto;
-}
-
-.messages li {
-    transition: opacity 0.5s, transform 0.5s;
-} */

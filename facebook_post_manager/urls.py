@@ -25,6 +25,7 @@ urlpatterns = [
     path('', include('posts.urls')),
     path('templates/', include('template_manager.urls')),
     path('auth/', include('authentication.urls')),
+    
 
     # path('accounts/login/', auth_views.LoginView.as_view(), name='login'),
     # path('accounts/logout/', auth_views.LogoutView.as_view(), name='logout'),

@@ -12,7 +12,9 @@ urlpatterns = [
 
     path('background-tasks/', views.background_tasks, name='background_tasks'),
     path('delete-posts/', views.delete_posts, name='delete_posts'),
-    path('edit/<int:log_id>/', views.edit_post_log, name='edit_post_log'),
+    path('edit/<int:post_id>/', views.edit_post_log, name='edit_post_log'),
+
+    path('fetch_post_details/<int:post_id>/', views.fetch_post_details, name='fetch_post_details'),
 
     # --------------- Facebook Tokens -----------
     
