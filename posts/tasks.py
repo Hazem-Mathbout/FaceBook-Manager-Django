@@ -1,5 +1,5 @@
 from celery import shared_task
-from .models import BackgroundTask, PostLog, PostFacebookPageTemplate, FacebookPage
+from .models import BackgroundTask, Post, PostFacebookPageTemplate, FacebookPage
 from datetime import timedelta
 from django.utils import timezone
 from .utils import publish_post, apply_templates_to_image, translate
@@ -9,8 +9,8 @@ import time
 @shared_task
 def publish_log(log_id, facebook_page_ids, task_id, publication_time):
     try:
-        log = PostLog.objects.get(id=log_id)
-        org_post = log.post_page_template.post
+        org_post = Post.objects.get(id=log_id)
+        # org_post = post.post_page_template.post
         org_recipe_name = org_post.recipe_name
         org_description = org_post.description
         org_comment = org_post.comment
@@ -52,7 +52,10 @@ def publish_log(log_id, facebook_page_ids, task_id, publication_time):
                     translated_description = org_description
 
                 if org_post.translate_post:
-                    translated_comment = translate(org_comment, 'en', facebook_page.language)
+                    if org_comment:
+                        translated_comment = translate(org_comment, 'en', facebook_page.language)
+                    else:
+                        translated_comment = org_comment
                 else:
                     translated_comment = org_comment
 
@@ -84,12 +87,12 @@ def publish_log(log_id, facebook_page_ids, task_id, publication_time):
                 default_storage.delete(path_editedimage)
                 print(f"Deleted image path: {path_editedimage}")
             except Exception as e :
-                print("Error in publish_log in background task: ", str(r))
+                print("Error in publish_log in background task: ", str(e))
                 pass
 
-        task.number_succes_logs += success_count
-        task.save()
-        task.calculate_status()
+        # task.number_succes_logs += success_count
+        # task.save()
+        # task.calculate_status()
 
     except Exception as e:
         print(f"Error publishing log {log_id}: {e}")
@@ -99,6 +102,9 @@ def schedule_task(task_id):
     print("<<< schedule_task is running >>>")
     try:
         task = BackgroundTask.objects.get(id=task_id)
+        task.bg_task_status = 'in_progress'
+        task.save()
+
         interval = timedelta(hours=task.interval_hours, minutes=task.interval_minutes)
         facebook_pages = task.facebook_pages.all()
         facebook_page_ids = [page.id for page in facebook_pages]
@@ -107,14 +113,21 @@ def schedule_task(task_id):
 
         print(f"Scheduling task {task_id} to start at {next_time}")
         
-        for log in task.selected_logs.all():
+        for post in task.selected_posts.all():
             try:
-                publish_log(log.id, facebook_page_ids, task.id, next_time)
-                print(f"Scheduled log {log.id} for publishing at {next_time}")
+                publish_log(post.id, facebook_page_ids, task.id, next_time)
+                task.number_succes_logs += 1
+                task.calculate_status()
+                print(f"Scheduled log {post.id} for publishing at {next_time}")
                 next_time += interval
                 time.sleep(idel_time) # deafult 1 minute delay.
             except Exception as e:
-                print(f"Error scheduling log {log.id}: {e}")
+                print(f"Error scheduling log {post.id}: {e}")
+        
+        task.bg_task_status = 'finished'
+        task.save()
 
     except Exception as e:
+        task.bg_task_status = 'failed'
+        task.save()
         print(f"Error scheduling task {task_id}: {e}")

@@ -95,6 +95,14 @@ class PostLog(models.Model):
         return f"{self.post_page_template.post.recipe_name} by {self.user.username}"
 
 class BackgroundTask(models.Model):
+
+    STATUS_CHOICES = [
+        ('not_started', 'Not Started'),
+        ('in_progress', 'In Progress'),
+        ('finished', 'Finished'),
+        ('failed', 'Failed')
+    ]
+
     publication_time = models.DateTimeField(null=True, blank=True)
     interval_hours = models.IntegerField()
     interval_minutes = models.IntegerField()
@@ -102,23 +110,23 @@ class BackgroundTask(models.Model):
     publish_now = models.BooleanField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    status = models.IntegerField(default=0)  # Percentage of completion
+    status = models.IntegerField(default=0)  # Percentage of completion of succefual publishing posts
     number_succes_logs = models.IntegerField(default=0)
+    bg_task_status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='not_started')
 
-    # Relationships to selected logs and Facebook pages
-    selected_logs = models.ManyToManyField(PostLog, related_name='background_tasks')
+    # Relationships to selected posts and Facebook pages
+    selected_posts = models.ManyToManyField(Post, related_name='background_tasks') # This holding the posts ids from the UI.
     facebook_pages = models.ManyToManyField(FacebookPage, related_name='background_tasks')
 
     def calculate_status(self):
-        total_logs = self.selected_logs.count()
-        # published_logs = self.selected_logs.filter(post_page_template__is_published=True).count()
+        total_logs = self.selected_posts.count()
         published_logs = self.number_succes_logs
         if total_logs > 0:
             self.status = (published_logs / total_logs) * 100
         self.save()
 
     def get_number_posts(self):
-        return self.selected_logs.count()
+        return self.selected_posts.count()
 
     def __str__(self):
         return f"Task {self.id} - {self.status}% complete"

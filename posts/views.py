@@ -294,7 +294,7 @@ def republish_posts(request):
             data = unquote(request.body.decode('utf-8'))
             data_dict = dict(param.split('=') for param in data.split('&'))
 
-            selected_logs = request.POST.getlist('selectedLogs[]')
+            selected_posts = request.POST.getlist('selectedLogs[]')
             publication_time = data_dict.get('publicationTime', '')
             interval_hours = int(data_dict.get('intervalHours', 0))
             interval_minutes = int(data_dict.get('intervalMinutes', 0))
@@ -306,8 +306,8 @@ def republish_posts(request):
             if not publication_time:
                 publication_time = None
 
-            if selected_logs:
-                selected_logs = list(map(int, selected_logs))
+            if selected_posts:
+                selected_posts = list(map(int, selected_posts))
 
             if facebook_pages:
                 facebook_pages = list(map(int, facebook_pages))
@@ -326,7 +326,7 @@ def republish_posts(request):
 
             
             print("publication_time: " , publication_time)
-            print("selected_logs: " , selected_logs)
+            print("selected_posts: " , selected_posts)
 
             # Perform validations
 
@@ -338,7 +338,7 @@ def republish_posts(request):
                 if publication_time <= current_time_utc + timedelta(minutes=10):
                     return JsonResponse({'error': 'Publication time must be at least 10 minutes in the future.'}, status=400)
 
-            if not selected_logs :
+            if not selected_posts :
                 return JsonResponse({'error': 'You must select at least one post to continue'}, status=400)
 
             if not publish_now and not publication_time:
@@ -368,11 +368,11 @@ def republish_posts(request):
                 idel_time=idle_time,
             )
 
-            task.selected_logs.set(selected_logs)
+            task.selected_posts.set(selected_posts)
             task.facebook_pages.set(facebook_pages)
             task.save()
 
-            print("selected_logs: ", task.selected_logs)
+            print("selected_logs: ", task.selected_posts)
             print("publication_time: ", task.publication_time)
             print("publication_time: ", type(task.publication_time))
             print("interval_hours: ", type(task.interval_hours))
@@ -490,6 +490,8 @@ def edit_post_log(request, post_id):
                 print("Error in handle_post_saving_or_republishing: " , str(e))
         
     else:
+        post.publish_now = False
+        post.publication_time = None
         form = PostForm(instance=post)
 
 
@@ -545,14 +547,23 @@ def handle_post_saving_or_republishing(request, save_only:bool, post=None):
             publication_time = form.cleaned_data['publication_time']
 
             # Adjust publication time for user's timezone
-            print("user_timezone : " , user_timezone)
-            print("publication_time: " , publication_time)
+            # print("user_timezone : " , user_timezone)
+            # print("publication_time: " , publication_time)
 
-            if publication_time and user_timezone:
-                local_tz = pytz.timezone(user_timezone)
-                publication_time = local_tz.localize(publication_time)
-                publication_time = publication_time.astimezone(pytz.UTC)
-                post.publication_time = publication_time
+            if publication_time:
+                # If the publication_time is not naive, make it naive first
+                if publication_time.tzinfo is not None:
+                    publication_time = publication_time.replace(tzinfo=None)
+
+                # Convert the publication_time to the user's local timezone
+                if user_timezone:
+                    local_tz = pytz.timezone(user_timezone)
+                    publication_time = local_tz.localize(publication_time)
+
+                    # Convert to UTC time
+                    publication_time = publication_time.astimezone(pytz.UTC)
+                    post.publication_time = publication_time
+
             # if len(post.facebook_pages.all()) > 1:
             #     print(f"The Re-Publishing here is for one page only\n if you need to make Re-Publishing for this post\n You can do that using Background Task.")
             #     messages.error(request, 'The Re-Publishing here is for one page only\n if you need to make Re-Publishing for this post\n You can do that using Background Task.')
@@ -638,14 +649,6 @@ def handle_post_saving_or_republishing(request, save_only:bool, post=None):
         else:
             messages.error(request, 'Form is not valid')
             return False
-            # return render(request, 'posts/post_edit.html', context)
-
-        # return form
-    # else:
-    #     form = PostForm(instance=post)
-    #     formset = PostFacebookPageTemplateFormSet(instance=post)
-
-    # return render(request, 'posts/post_creation.html', {'form': form, 'formset': formset})
 
 
 

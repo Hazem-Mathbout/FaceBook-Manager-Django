@@ -15,13 +15,16 @@
             {% if page_obj %}
                 {% for task in page_obj %}
                 <div class="task-item card mb-3">
-                    <div class="card-body">
-                        <div class="form-check">
-                            <input class="form-check-input task-checkbox" type="checkbox" value="{{ task.id }}" name="selected_tasks">
-                            <label class="form-check-label">
-                                <h5 class="card-title d-inline-block">Task {{ task.id }}</h5>
-                            </label>
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center">
+                            <input class="form-check-input task-checkbox ml-0" type="checkbox" value="{{ task.id }}" name="selected_tasks">
+                            <h5 class="card-title d-inline-block mb-0 ml-4">Task {{ task.id }}</h5>
                         </div>
+                        <span class="badge {% if task.bg_task_status == 'not_started' %}badge-secondary{% elif task.bg_task_status == 'in_progress' %}badge-warning{% elif task.bg_task_status == 'finished' %}badge-success{% elif task.bg_task_status == 'failed' %}badge-danger{% endif %}">
+                            {{ task.get_bg_task_status_display }}
+                        </span>
+                    </div>
+                    <div class="card-body">
                         <p class="card-text">Total Re-Published Posts: {{ task.get_number_posts }}</p>
                         <p class="card-text">Interval: {{ task.interval_hours }} hours {{ task.interval_minutes }} minutes</p>
                         <p class="card-text">Idel Time: {{ task.idel_time }} minutes</p>
@@ -36,7 +39,9 @@
                         <p class="card-text updated-at">
                             Updated At: {{ task.updated_at|date:'Y-m-d\TH:i:s\Z' }}</p>
                         <div class="progress">
-                            <div class="progress-bar" role="progressbar" style="width: {{ task.status }}%;" aria-valuenow="{{ task.status }}" aria-valuemin="0" aria-valuemax="100">{{ task.status }}%</div>
+                            <div class="progress-bar" role="progressbar" style="width: {{ task.status }}%;" aria-valuenow="{{ task.status }}" aria-valuemin="0" aria-valuemax="100">
+                                {{ task.status }}%
+                            </div>
                         </div>
                     </div>
                 </div>

@@ -323,9 +323,10 @@ def publish_post(post_page_template: PostFacebookPageTemplate, overid_db_ins=Tru
 
     except facebook.GraphAPIError as e:
         # If there's an error, update the failure message
-        post_page_template.is_published = False
-        post_page_template.failure_message = f"Failed to publish: {str(e)}"
-        post_page_template.save()
+        if overid_db_ins:
+            post_page_template.is_published = False
+            post_page_template.failure_message = f"Failed to publish: {str(e)}"
+            post_page_template.save()
         print("facebook.GraphAPIError: ", str(e))
     
     # Update or refresh the Access Token For that Page has been publishing now...
